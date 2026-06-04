@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PaymentsRouteImport } from './routes/payments'
@@ -19,6 +20,11 @@ import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
 import { Route as TrainingSessionIdRouteImport } from './routes/training.$sessionId'
 import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athleteId'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScheduleRoute = ScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/reports': typeof ReportsRoute
   '/schedule': typeof ScheduleRoute
+  '/settings': typeof SettingsRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes/': typeof AthletesIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/payments': typeof PaymentsRoute
   '/reports': typeof ReportsRoute
   '/schedule': typeof ScheduleRoute
+  '/settings': typeof SettingsRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes': typeof AthletesIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/reports': typeof ReportsRoute
   '/schedule': typeof ScheduleRoute
+  '/settings': typeof SettingsRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes/': typeof AthletesIndexRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reports'
     | '/schedule'
+    | '/settings'
     | '/athletes/$athleteId'
     | '/training/$sessionId'
     | '/athletes/'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reports'
     | '/schedule'
+    | '/settings'
     | '/athletes/$athleteId'
     | '/training/$sessionId'
     | '/athletes'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reports'
     | '/schedule'
+    | '/settings'
     | '/athletes/$athleteId'
     | '/training/$sessionId'
     | '/athletes/'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   ReportsRoute: typeof ReportsRoute
   ScheduleRoute: typeof ScheduleRoute
+  SettingsRoute: typeof SettingsRoute
   AthletesAthleteIdRoute: typeof AthletesAthleteIdRoute
   TrainingSessionIdRoute: typeof TrainingSessionIdRoute
   AthletesIndexRoute: typeof AthletesIndexRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/schedule': {
       id: '/schedule'
       path: '/schedule'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   ReportsRoute: ReportsRoute,
   ScheduleRoute: ScheduleRoute,
+  SettingsRoute: SettingsRoute,
   AthletesAthleteIdRoute: AthletesAthleteIdRoute,
   TrainingSessionIdRoute: TrainingSessionIdRoute,
   AthletesIndexRoute: AthletesIndexRoute,
