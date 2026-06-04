@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ScheduleRouteImport } from './routes/schedule'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athlet
 const ScheduleRoute = ScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsRoute = PaymentsRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
+  '/reports': typeof ReportsRoute
   '/schedule': typeof ScheduleRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
+  '/reports': typeof ReportsRoute
   '/schedule': typeof ScheduleRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
+  '/reports': typeof ReportsRoute
   '/schedule': typeof ScheduleRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/payments'
+    | '/reports'
     | '/schedule'
     | '/athletes/$athleteId'
     | '/training/$sessionId'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/payments'
+    | '/reports'
     | '/schedule'
     | '/athletes/$athleteId'
     | '/training/$sessionId'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/payments'
+    | '/reports'
     | '/schedule'
     | '/athletes/$athleteId'
     | '/training/$sessionId'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   PaymentsRoute: typeof PaymentsRoute
+  ReportsRoute: typeof ReportsRoute
   ScheduleRoute: typeof ScheduleRoute
   AthletesAthleteIdRoute: typeof AthletesAthleteIdRoute
   TrainingSessionIdRoute: typeof TrainingSessionIdRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/schedule'
       fullPath: '/schedule'
       preLoaderRoute: typeof ScheduleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments': {
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   PaymentsRoute: PaymentsRoute,
+  ReportsRoute: ReportsRoute,
   ScheduleRoute: ScheduleRoute,
   AthletesAthleteIdRoute: AthletesAthleteIdRoute,
   TrainingSessionIdRoute: TrainingSessionIdRoute,
