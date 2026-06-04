@@ -13,6 +13,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training.index'
 import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
+import { Route as TrainingSessionIdRouteImport } from './routes/training.$sessionId'
 import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athleteId'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -35,6 +36,11 @@ const AthletesIndexRoute = AthletesIndexRouteImport.update({
   path: '/athletes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainingSessionIdRoute = TrainingSessionIdRouteImport.update({
+  id: '/training/$sessionId',
+  path: '/training/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AthletesAthleteIdRoute = AthletesAthleteIdRouteImport.update({
   id: '/athletes/$athleteId',
   path: '/athletes/$athleteId',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes/': typeof AthletesIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes': typeof AthletesIndexRoute
   '/training': typeof TrainingIndexRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes/': typeof AthletesIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
@@ -69,15 +78,23 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/athletes/$athleteId'
+    | '/training/$sessionId'
     | '/athletes/'
     | '/training/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/athletes/$athleteId' | '/athletes' | '/training'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/athletes/$athleteId'
+    | '/training/$sessionId'
+    | '/athletes'
+    | '/training'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
     | '/athletes/$athleteId'
+    | '/training/$sessionId'
     | '/athletes/'
     | '/training/'
   fileRoutesById: FileRoutesById
@@ -86,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   AthletesAthleteIdRoute: typeof AthletesAthleteIdRoute
+  TrainingSessionIdRoute: typeof TrainingSessionIdRoute
   AthletesIndexRoute: typeof AthletesIndexRoute
   TrainingIndexRoute: typeof TrainingIndexRoute
 }
@@ -120,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AthletesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/training/$sessionId': {
+      id: '/training/$sessionId'
+      path: '/training/$sessionId'
+      fullPath: '/training/$sessionId'
+      preLoaderRoute: typeof TrainingSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/athletes/$athleteId': {
       id: '/athletes/$athleteId'
       path: '/athletes/$athleteId'
@@ -134,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   AthletesAthleteIdRoute: AthletesAthleteIdRoute,
+  TrainingSessionIdRoute: TrainingSessionIdRoute,
   AthletesIndexRoute: AthletesIndexRoute,
   TrainingIndexRoute: TrainingIndexRoute,
 }
