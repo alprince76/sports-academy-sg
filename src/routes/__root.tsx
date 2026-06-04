@@ -11,7 +11,6 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -82,6 +81,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Platform manajemen akademi olahraga modern untuk SSB dan akademi olahraga anak." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "SportAcademy — Digitalisasi Akademi Olahraga Anak" },
+      { name: "twitter:title", content: "SportAcademy — Digitalisasi Akademi Olahraga Anak" },
+      { property: "og:description", content: "Platform manajemen akademi olahraga modern untuk SSB dan akademi olahraga anak." },
+      { name: "twitter:description", content: "Platform manajemen akademi olahraga modern untuk SSB dan akademi olahraga anak." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b104cf84-6b9d-4d1c-ad85-45bc52616c42/id-preview-77cdfbba--e0a0c268-9525-4111-bbc0-1ca61211d8bb.lovable.app-1780589195398.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b104cf84-6b9d-4d1c-ad85-45bc52616c42/id-preview-77cdfbba--e0a0c268-9525-4111-bbc0-1ca61211d8bb.lovable.app-1780589195398.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -120,7 +125,6 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster position="top-right" />
     </QueryClientProvider>
   );
 }
