@@ -19,13 +19,15 @@ export function Navbar() {
           <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Fitur</a>
           <a href="#benefits" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Manfaat</a>
           <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Harga</a>
-          <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Demo</Link>
+          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Demo</Link>
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex">Masuk</Button>
+          <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
+            <Link to="/login">Masuk</Link>
+          </Button>
           <Button size="sm" asChild>
-            <Link to="/dashboard">Coba Demo</Link>
+            <Link to="/login">Coba Demo</Link>
           </Button>
         </div>
       </div>
