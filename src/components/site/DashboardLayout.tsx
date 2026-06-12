@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Activity, CalendarCheck, ChartLine, CreditCard, Home, LogOut, Settings, Trophy,
-  UsersRound, Menu, Bell, Search, Whistle, Building2, ClipboardCheck, ClipboardList,
+  UsersRound, Menu, Bell, Search, Megaphone, Building2, ClipboardCheck, ClipboardList,
   Sparkles, Heart, MessageSquare, TrendingUp, Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   owner: [
     { icon: Home, label: "Dashboard", to: "/dashboard" },
     { icon: UsersRound, label: "Athletes Overview", to: "/athletes" },
-    { icon: Whistle, label: "Coaches", to: "/coaches" },
+    { icon: Megaphone, label: "Coaches", to: "/coaches" },
     { icon: Wallet, label: "Revenue", to: "/revenue" },
     { icon: ChartLine, label: "Reports", to: "/reports" },
     { icon: Settings, label: "Settings", to: "/settings" },
@@ -94,7 +94,7 @@ function Brand() {
 const ROLE_ICON: Record<Role, typeof Building2> = {
   owner: Building2,
   admin: Settings,
-  coach: Whistle,
+  coach: Megaphone,
   parent: Heart,
 };
 

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Activity, ArrowUpRight, CalendarCheck, CreditCard, Trophy, UsersRound,
   Wallet, TrendingUp, ClipboardCheck, ClipboardList, MessageSquare, Plus,
-  FileBarChart, Download, Whistle, Award, Star,
+  FileBarChart, Download, Megaphone, Award, Star,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { useRole, ROLE_USERS } from "@/lib/role";
@@ -131,7 +131,7 @@ function OwnerDashboard({ userName }: { userName: string }) {
     <DashboardLayout title={`Selamat datang, ${userName} 👋`} subtitle="Ringkasan bisnis akademi Anda.">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Athletes" value="128" change="+12" icon={UsersRound} />
-        <StatCard label="Active Coaches" value="8" change="+1" icon={Whistle} />
+        <StatCard label="Active Coaches" value="8" change="+1" icon={Megaphone} />
         <StatCard label="Monthly Revenue" value="Rp 48,2jt" change="+18%" icon={Wallet} />
         <StatCard label="Attendance Rate" value="92%" change="+4%" icon={CalendarCheck} />
       </div>
@@ -208,7 +208,7 @@ function AdminDashboard({ userName }: { userName: string }) {
           { label: "Add Athlete", icon: Plus, to: "/athletes" },
           { label: "Create Schedule", icon: CalendarCheck, to: "/schedule" },
           { label: "Register Payment", icon: CreditCard, to: "/payments" },
-          { label: "Assign Coach", icon: Whistle, onClick: () => toast.success("Coach assigned (demo)") },
+          { label: "Assign Coach", icon: Megaphone, onClick: () => toast.success("Coach assigned (demo)") },
         ]} />
       </div>
 

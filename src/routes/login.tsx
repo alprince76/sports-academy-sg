@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Settings, Whistle, Users, Trophy, ArrowRight, Sparkles } from "lucide-react";
+import { Building2, Settings, Megaphone, Users, Trophy, ArrowRight, Sparkles } from "lucide-react";
 import { setRole, type Role, ROLE_USERS } from "@/lib/role";
 
 export const Route = createFileRoute("/login")({
@@ -33,7 +33,7 @@ const ROLES: {
   },
   {
     role: "coach",
-    icon: Whistle,
+    icon: Megaphone,
     desc: "Track attendance, training sessions, and athlete performance.",
     cta: "Enter as Coach",
     accent: "from-emerald-500 to-teal-600",

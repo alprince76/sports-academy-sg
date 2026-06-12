@@ -47,10 +47,10 @@ function subscribe(cb: () => void) {
 }
 
 export function useRole(): Role {
-  const role = useSyncExternalStore(
+  const role = useSyncExternalStore<Role>(
     subscribe,
-    () => getRole() ?? "admin",
-    () => "admin"
+    () => (getRole() ?? "admin") as Role,
+    () => "admin" as Role
   );
   return role;
 }
