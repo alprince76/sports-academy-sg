@@ -46,7 +46,12 @@ function AthleteDetail() {
       title={a.name}
       subtitle={`${a.age} tahun · ${a.position} · ${a.team}`}
       actions={
-        <Button asChild variant="outline"><Link to="/athletes"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { toast.success("Export started", { description: "PDF report sedang disiapkan" }); setTimeout(() => window.print(), 400); }}>
+            <FileDown className="mr-1 h-4 w-4" />Export Report
+          </Button>
+          <Button asChild variant="outline"><Link to="/athletes"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>
+        </div>
       }
     >
       <div className="grid gap-6 lg:grid-cols-3">
