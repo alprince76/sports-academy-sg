@@ -17,11 +17,13 @@ import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as MyAthletesRouteImport } from './routes/my-athletes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as EvaluationsRouteImport } from './routes/evaluations'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CoachesRouteImport } from './routes/coaches'
 import { Route as CoachFeedbackRouteImport } from './routes/coach-feedback'
 import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as AssessmentRouteImport } from './routes/assessment'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training.index'
 import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
@@ -68,6 +70,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EvaluationsRoute = EvaluationsRouteImport.update({
   id: '/evaluations',
   path: '/evaluations',
@@ -91,6 +98,11 @@ const CoachFeedbackRoute = CoachFeedbackRouteImport.update({
 const AttendanceRoute = AttendanceRouteImport.update({
   id: '/attendance',
   path: '/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssessmentRoute = AssessmentRouteImport.update({
+  id: '/assessment',
+  path: '/assessment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -121,11 +133,13 @@ const AthletesAthleteIdRoute = AthletesAthleteIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assessment': typeof AssessmentRoute
   '/attendance': typeof AttendanceRoute
   '/coach-feedback': typeof CoachFeedbackRoute
   '/coaches': typeof CoachesRoute
   '/dashboard': typeof DashboardRoute
   '/evaluations': typeof EvaluationsRoute
+  '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
   '/my-athletes': typeof MyAthletesRoute
   '/payments': typeof PaymentsRoute
@@ -141,11 +155,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assessment': typeof AssessmentRoute
   '/attendance': typeof AttendanceRoute
   '/coach-feedback': typeof CoachFeedbackRoute
   '/coaches': typeof CoachesRoute
   '/dashboard': typeof DashboardRoute
   '/evaluations': typeof EvaluationsRoute
+  '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
   '/my-athletes': typeof MyAthletesRoute
   '/payments': typeof PaymentsRoute
@@ -162,11 +178,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assessment': typeof AssessmentRoute
   '/attendance': typeof AttendanceRoute
   '/coach-feedback': typeof CoachFeedbackRoute
   '/coaches': typeof CoachesRoute
   '/dashboard': typeof DashboardRoute
   '/evaluations': typeof EvaluationsRoute
+  '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
   '/my-athletes': typeof MyAthletesRoute
   '/payments': typeof PaymentsRoute
@@ -184,11 +202,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/assessment'
     | '/attendance'
     | '/coach-feedback'
     | '/coaches'
     | '/dashboard'
     | '/evaluations'
+    | '/insights'
     | '/login'
     | '/my-athletes'
     | '/payments'
@@ -204,11 +224,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/assessment'
     | '/attendance'
     | '/coach-feedback'
     | '/coaches'
     | '/dashboard'
     | '/evaluations'
+    | '/insights'
     | '/login'
     | '/my-athletes'
     | '/payments'
@@ -224,11 +246,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/assessment'
     | '/attendance'
     | '/coach-feedback'
     | '/coaches'
     | '/dashboard'
     | '/evaluations'
+    | '/insights'
     | '/login'
     | '/my-athletes'
     | '/payments'
@@ -245,11 +269,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssessmentRoute: typeof AssessmentRoute
   AttendanceRoute: typeof AttendanceRoute
   CoachFeedbackRoute: typeof CoachFeedbackRoute
   CoachesRoute: typeof CoachesRoute
   DashboardRoute: typeof DashboardRoute
   EvaluationsRoute: typeof EvaluationsRoute
+  InsightsRoute: typeof InsightsRoute
   LoginRoute: typeof LoginRoute
   MyAthletesRoute: typeof MyAthletesRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -322,6 +348,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/evaluations': {
       id: '/evaluations'
       path: '/evaluations'
@@ -355,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/attendance'
       fullPath: '/attendance'
       preLoaderRoute: typeof AttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assessment': {
+      id: '/assessment'
+      path: '/assessment'
+      fullPath: '/assessment'
+      preLoaderRoute: typeof AssessmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -397,11 +437,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssessmentRoute: AssessmentRoute,
   AttendanceRoute: AttendanceRoute,
   CoachFeedbackRoute: CoachFeedbackRoute,
   CoachesRoute: CoachesRoute,
   DashboardRoute: DashboardRoute,
   EvaluationsRoute: EvaluationsRoute,
+  InsightsRoute: InsightsRoute,
   LoginRoute: LoginRoute,
   MyAthletesRoute: MyAthletesRoute,
   PaymentsRoute: PaymentsRoute,
