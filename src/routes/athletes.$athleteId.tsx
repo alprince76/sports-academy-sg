@@ -160,6 +160,78 @@ function AthleteDetail() {
                     <p className="mt-2 text-sm text-muted-foreground">"Konsentrasi saat sesi sangat baik. Lanjutkan!"</p>
                   </div>
                 </TabsContent>
+                <TabsContent value="assessments" className="mt-4 space-y-3">
+                  {(() => {
+                    const pa = PERIODIC_ASSESSMENTS.find((p) => p.athleteId === a.id) ?? PERIODIC_ASSESSMENTS[0];
+                    return (
+                      <>
+                        <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                          <div>
+                            <p className="text-sm font-semibold">Periodic Assessment</p>
+                            <p className="text-xs text-muted-foreground">{pa.date}</p>
+                          </div>
+                          <Badge variant="secondary" className={pa.status === "Final" ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>{pa.status}</Badge>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {SKILL_CATEGORIES.map((c) => (
+                            <div key={c} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                              <span>{c}</span>
+                              <span className="font-display font-bold text-primary">{pa.current[c]} · {SKILL_SCALE[pa.current[c]-1]?.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="rounded-xl border border-border p-4">
+                          <p className="text-xs font-semibold uppercase text-muted-foreground">Recommendations</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                            {pa.recommendations.map((r) => <li key={r}>{r}</li>)}
+                          </ul>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </TabsContent>
+                <TabsContent value="radar" className="mt-4">
+                  {(() => {
+                    const pa = PERIODIC_ASSESSMENTS.find((p) => p.athleteId === a.id) ?? PERIODIC_ASSESSMENTS[0];
+                    return (
+                      <div className="flex flex-col items-center">
+                        <RadarChart
+                          axes={[...SKILL_CATEGORIES]}
+                          series={[
+                            { label: "Previous", color: "#94a3b8", values: SKILL_CATEGORIES.map((c) => pa.previous[c]) },
+                            { label: "Current", color: "hsl(var(--primary))", values: SKILL_CATEGORIES.map((c) => pa.current[c]) },
+                          ]}
+                          size={320}
+                        />
+                        <div className="mt-3 flex items-center gap-4 text-xs">
+                          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-slate-400" />Previous Period</span>
+                          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Current Period</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </TabsContent>
+                <TabsContent value="reports" className="mt-4 space-y-3">
+                  <div className="rounded-xl border border-border p-4">
+                    <p className="text-sm font-semibold">Monthly Progress Trend</p>
+                    <div className="mt-3 flex h-32 items-end gap-2">
+                      {[68, 72, 75, 78, 82, 86].map((v, i) => (
+                        <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                          <span className="text-[10px] font-semibold">{v}</span>
+                          <div className="w-full rounded-t bg-gradient-to-t from-primary to-emerald-400" style={{ height: `${v}%` }} />
+                          <span className="text-[10px] text-muted-foreground">M{i+1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border p-4 text-sm">
+                    <p className="font-semibold">Quarterly Skill Growth</p>
+                    <p className="mt-1 text-muted-foreground">Avg skill +0.6 dari Q1 ke Q2. Pertumbuhan terbesar di Ball Handling (+1.2).</p>
+                  </div>
+                  <Button className="w-full" onClick={() => { toast.success("Export started", { description: "PDF report sedang disiapkan" }); setTimeout(() => window.print(), 400); }}>
+                    <FileDown className="mr-1 h-4 w-4" />Export Athlete Report (PDF)
+                  </Button>
+                </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
