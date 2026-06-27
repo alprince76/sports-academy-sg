@@ -8,10 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Check, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Check, Save, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES } from "@/lib/demo-data";
 import { SESSIONS } from "./training.index";
+import { SESSION_EVAL_FIELDS, type SessionEvaluation } from "@/lib/assessment-data";
 
 export const Route = createFileRoute("/training/$sessionId")({
   head: () => ({ meta: [{ title: "Training Session — SportAcademy" }] }),
