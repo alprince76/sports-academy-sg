@@ -2,9 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ATHLETES } from "@/lib/demo-data";
-import { Award, Star } from "lucide-react";
+import { PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE } from "@/lib/assessment-data";
+import { RadarChart } from "@/components/site/RadarChart";
+import { Award, Star, FileDown, TrendingUp, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({ meta: [{ title: "Progress — SportAcademy" }] }),
@@ -61,6 +65,66 @@ function ProgressPage() {
               </div>
             </CardContent>
           </Card>
+          {(() => {
+            const pa = PERIODIC_ASSESSMENTS.find((p) => p.athleteId === child.id) ?? PERIODIC_ASSESSMENTS[0];
+            const avg = (Object.values(pa.current).reduce((a, b) => a + b, 0) / 6).toFixed(1);
+            const prevAvg = (Object.values(pa.previous).reduce((a, b) => a + b, 0) / 6).toFixed(1);
+            const delta = (parseFloat(avg) - parseFloat(prevAvg)).toFixed(1);
+            return (
+              <>
+                <Card className="border-border/70">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-display text-lg font-semibold">Latest Assessment</h2>
+                      <Badge variant="secondary" className="bg-primary-soft text-primary">{pa.date}</Badge>
+                    </div>
+                    <div className="mt-4 flex items-end gap-4">
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground">Overall</p>
+                        <p className="font-display text-4xl font-bold text-primary">{avg}</p>
+                        <p className="text-xs text-muted-foreground">dari 5.00</p>
+                      </div>
+                      <Badge variant="secondary" className="bg-primary-soft text-primary"><TrendingUp className="mr-1 h-3 w-3" />{parseFloat(delta) >= 0 ? "+" : ""}{delta} vs sebelumnya</Badge>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {SKILL_CATEGORIES.map((c) => (
+                        <div key={c} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-xs">
+                          <span>{c}</span>
+                          <span className="font-display font-bold text-primary">{pa.current[c]} · {SKILL_SCALE[pa.current[c]-1]?.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/70">
+                  <CardContent className="p-6">
+                    <h2 className="font-display text-lg font-semibold">Skill Radar</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">Periode saat ini vs sebelumnya</p>
+                    <div className="mt-3 flex justify-center">
+                      <RadarChart
+                        axes={[...SKILL_CATEGORIES]}
+                        series={[
+                          { label: "Previous", color: "#94a3b8", values: SKILL_CATEGORIES.map((c) => pa.previous[c]) },
+                          { label: "Current", color: "hsl(var(--primary))", values: SKILL_CATEGORIES.map((c) => pa.current[c]) },
+                        ]}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/70 lg:col-span-2">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /><h2 className="font-display text-lg font-semibold">Coach Recommendations</h2></div>
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+                      {pa.recommendations.map((r) => <li key={r}>{r}</li>)}
+                    </ul>
+                    <Button className="mt-4" onClick={() => { toast.success("Report card sedang disiapkan"); setTimeout(() => window.print(), 400); }}>
+                      <FileDown className="mr-1 h-4 w-4" />Download Report Card
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="attendance" className="mt-6">

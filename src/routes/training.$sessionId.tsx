@@ -8,10 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Check, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Check, Save, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES } from "@/lib/demo-data";
 import { SESSIONS } from "./training.index";
+import { SESSION_EVAL_FIELDS, type SessionEvaluation } from "@/lib/assessment-data";
 
 export const Route = createFileRoute("/training/$sessionId")({
   head: () => ({ meta: [{ title: "Training Session — SportAcademy" }] }),
@@ -49,6 +51,12 @@ function SessionPage() {
       subtitle={`${session.coach} · ${session.team} · ${session.date}, ${session.time}`}
       actions={<Button asChild variant="outline"><Link to="/training"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>}
     >
+      <Tabs defaultValue="roster">
+        <TabsList>
+          <TabsTrigger value="roster">Roster & Evaluasi</TabsTrigger>
+          <TabsTrigger value="session-eval">Session Evaluation</TabsTrigger>
+        </TabsList>
+        <TabsContent value="roster" className="mt-4">
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="border-border/70 lg:col-span-2">
           <CardContent className="p-6">
@@ -113,6 +121,11 @@ function SessionPage() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+        <TabsContent value="session-eval" className="mt-4">
+          <SessionEvaluationPanel roster={roster} />
+        </TabsContent>
+      </Tabs>
     </DashboardLayout>
   );
 }
@@ -122,6 +135,62 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between rounded-lg bg-secondary/50 px-3 py-2">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function SessionEvaluationPanel({ roster }: { roster: typeof ATHLETES }) {
+  const [evals, setEvals] = useState<Record<string, SessionEvaluation>>(
+    Object.fromEntries(roster.map((a) => [a.id, { effort: 3, technique: 3, consistency: 3, focus: 3, attitude: 3 }]))
+  );
+  const [obs, setObs] = useState("");
+  const set = (id: string, key: keyof SessionEvaluation, v: number) =>
+    setEvals({ ...evals, [id]: { ...evals[id], [key]: v } });
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-border/70">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            <div>
+              <h2 className="font-display text-lg font-semibold">Level 1 — Drill Evaluation</h2>
+              <p className="text-xs text-muted-foreground">Skala 1–5 untuk Effort, Technique, Consistency, Focus, Attitude.</p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-4">
+            {roster.map((a) => (
+              <div key={a.id} className="rounded-xl border border-border p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary-soft text-xs text-primary">{a.name.split(" ").map(s=>s[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
+                  <div className="flex-1"><p className="text-sm font-semibold">{a.name}</p><p className="text-xs text-muted-foreground">{a.position} · {a.team}</p></div>
+                  <Badge variant="secondary" className="bg-primary-soft text-primary">
+                    Avg {(Object.values(evals[a.id]).reduce((x, y) => x + y, 0) / 5).toFixed(1)}
+                  </Badge>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {SESSION_EVAL_FIELDS.map((f) => (
+                    <div key={f.key} className="rounded-lg border border-border p-3">
+                      <div className="mb-2 flex items-center justify-between text-xs">
+                        <span className="font-medium">{f.label}</span>
+                        <span className="font-display text-sm font-bold text-primary">{evals[a.id][f.key]}</span>
+                      </div>
+                      <Slider min={1} max={5} step={1} value={[evals[a.id][f.key]]} onValueChange={([v]) => set(a.id, f.key, v)} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5">
+            <p className="mb-2 text-sm font-medium">Observation Notes</p>
+            <Textarea value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Catat observasi umum sesi ini..." className="min-h-24" />
+          </div>
+          <Button className="mt-4 w-full" onClick={() => toast.success("Drill evaluations saved", { description: `${roster.length} atlet · data masuk ke aggregator periodic` })}>
+            <Save className="mr-1 h-4 w-4" />Save Drill Evaluations
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
