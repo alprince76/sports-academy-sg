@@ -2,9 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ATHLETES } from "@/lib/demo-data";
-import { Award, Star } from "lucide-react";
+import { PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE } from "@/lib/assessment-data";
+import { RadarChart } from "@/components/site/RadarChart";
+import { Award, Star, FileDown, TrendingUp, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({ meta: [{ title: "Progress — SportAcademy" }] }),
