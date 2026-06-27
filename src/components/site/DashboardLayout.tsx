@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Activity, CalendarCheck, ChartLine, CreditCard, Home, LogOut, Settings, Trophy,
   UsersRound, Menu, Bell, Search, Megaphone, Building2, ClipboardCheck, ClipboardList,
-  Sparkles, Heart, MessageSquare, TrendingUp, Wallet,
+  Sparkles, Heart, MessageSquare, TrendingUp, Wallet, Target, BarChart3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
