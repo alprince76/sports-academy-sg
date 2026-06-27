@@ -35,6 +35,8 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: CalendarCheck, label: "Schedule", to: "/schedule" },
     { icon: CreditCard, label: "Payments", to: "/payments" },
     { icon: ChartLine, label: "Reports", to: "/reports" },
+    { icon: Target, label: "Athlete Assessment", to: "/assessment" },
+    { icon: BarChart3, label: "Assessment Insights", to: "/insights" },
     { icon: Settings, label: "Settings", to: "/settings" },
   ],
   coach: [
@@ -43,6 +45,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: Activity, label: "Training Sessions", to: "/training" },
     { icon: ClipboardCheck, label: "Attendance", to: "/attendance" },
     { icon: ClipboardList, label: "Evaluations", to: "/evaluations" },
+    { icon: BarChart3, label: "Assessment Insights", to: "/insights" },
   ],
   parent: [
     { icon: Home, label: "Dashboard", to: "/dashboard" },
