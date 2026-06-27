@@ -112,10 +112,13 @@ function AthleteDetail() {
           <Card className="border-border/70">
             <CardContent className="p-6">
               <Tabs defaultValue="history">
-                <TabsList>
+                <TabsList className="flex-wrap">
                   <TabsTrigger value="history">Training History</TabsTrigger>
                   <TabsTrigger value="attendance">Attendance</TabsTrigger>
                   <TabsTrigger value="feedback">Coach Feedback</TabsTrigger>
+                  <TabsTrigger value="assessments">Assessments</TabsTrigger>
+                  <TabsTrigger value="radar">Radar Skills</TabsTrigger>
+                  <TabsTrigger value="reports">Reports</TabsTrigger>
                 </TabsList>
                 <TabsContent value="history" className="mt-4 space-y-3">
                   {history.map((h, i) => (
