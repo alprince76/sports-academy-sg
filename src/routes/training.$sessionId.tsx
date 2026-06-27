@@ -121,6 +121,11 @@ function SessionPage() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+        <TabsContent value="session-eval" className="mt-4">
+          <SessionEvaluationPanel roster={roster} />
+        </TabsContent>
+      </Tabs>
     </DashboardLayout>
   );
 }
