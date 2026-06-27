@@ -51,6 +51,12 @@ function SessionPage() {
       subtitle={`${session.coach} · ${session.team} · ${session.date}, ${session.time}`}
       actions={<Button asChild variant="outline"><Link to="/training"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>}
     >
+      <Tabs defaultValue="roster">
+        <TabsList>
+          <TabsTrigger value="roster">Roster & Evaluasi</TabsTrigger>
+          <TabsTrigger value="session-eval">Session Evaluation</TabsTrigger>
+        </TabsList>
+        <TabsContent value="roster" className="mt-4">
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="border-border/70 lg:col-span-2">
           <CardContent className="p-6">
