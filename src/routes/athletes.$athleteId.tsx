@@ -4,9 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Trophy, Phone, User } from "lucide-react";
+import { ArrowLeft, Trophy, Phone, User, FileDown } from "lucide-react";
 import { ATHLETES } from "@/lib/demo-data";
+import { PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE } from "@/lib/assessment-data";
+import { RadarChart } from "@/components/site/RadarChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/athletes/$athleteId")({
   head: ({ params }) => {
