@@ -6,11 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Activity, ArrowUpRight, CalendarCheck, CreditCard, Trophy, UsersRound,
   Wallet, TrendingUp, ClipboardCheck, ClipboardList, MessageSquare, Plus,
-  FileBarChart, Download, Megaphone, Award, Star,
+  FileBarChart, Download, Megaphone, Award, Star, HeartPulse,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { useRole, ROLE_USERS } from "@/lib/role";
-import { ATHLETES } from "@/lib/demo-data";
+import { ATHLETES, getInjurySummary, healthStatusColor, HEALTH_STATUSES } from "@/lib/demo-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
