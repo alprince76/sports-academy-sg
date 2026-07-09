@@ -211,6 +211,8 @@ function OwnerDashboard({ userName }: { userName: string }) {
           { label: "Export Academy Summary", icon: Download, onClick: () => toast.success("Summary exported (demo)") },
         ]} />
       </div>
+
+      <div className="mt-6"><InjurySummary /></div>
     </DashboardLayout>
   );
 }
