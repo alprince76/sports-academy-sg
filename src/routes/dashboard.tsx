@@ -425,6 +425,8 @@ function ParentDashboard({ userName }: { userName: string }) {
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-6"><InjurySummary athleteFilter={(a) => a.id === child.id} /></div>
     </DashboardLayout>
   );
 }
