@@ -105,6 +105,7 @@ function AthleteDetail() {
                   <CalendarClock className="h-3 w-3" /> Perkiraan kembali: <span className="font-medium text-foreground">{a.health.expectedReturn}</span>
                 </p>
               )}
+            </div>
           </CardContent>
         </Card>
 
