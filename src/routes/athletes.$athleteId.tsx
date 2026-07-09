@@ -88,6 +88,23 @@ function AthleteDetail() {
                 ))}
               </div>
             </div>
+            <div className="mt-6 rounded-xl border border-border p-4">
+              <div className="flex items-center gap-2">
+                <HeartPulse className="h-4 w-4 text-primary" />
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Health Status</p>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <Badge variant="secondary" className={healthStatusColor(a.health.status)}>{a.health.status}</Badge>
+                <span className="text-[11px] text-muted-foreground">Updated {a.health.updatedAt}</span>
+              </div>
+              {a.health.note && (
+                <p className="mt-2 text-xs text-muted-foreground">{a.health.note}</p>
+              )}
+              {a.health.expectedReturn && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <CalendarClock className="h-3 w-3" /> Perkiraan kembali: <span className="font-medium text-foreground">{a.health.expectedReturn}</span>
+                </p>
+              )}
           </CardContent>
         </Card>
 
