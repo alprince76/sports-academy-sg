@@ -1,7 +1,10 @@
+export type HealthStatus = "Healthy" | "Minor Injury" | "Recovery" | "Not Available";
+
 export type Athlete = {
   id: string;
   name: string;
   age: number;
+  ageGroup: string;
   position: string;
   team: string;
   progress: number;
@@ -11,98 +14,132 @@ export type Athlete = {
   parent: { name: string; phone: string };
   skills: { name: string; value: number }[];
   achievements: string[];
+  health: {
+    status: HealthStatus;
+    note?: string;
+    updatedAt: string;
+    expectedReturn?: string;
+  };
 };
 
 export const ATHLETES: Athlete[] = [
   {
-    id: "1", name: "Rafi Pratama", age: 12, position: "Forward", team: "U-12 A",
+    id: "1", name: "Rafi Pratama", age: 12, ageGroup: "KU-12", position: "Shooting Guard", team: "Garuda Elite",
     progress: 86, attendance: 94, status: "Great",
-    note: "Finishing semakin tajam, perlu kerja pada pergerakan tanpa bola.",
+    note: "Jump shot semakin konsisten, perlu kerja pada off-ball movement dan closeout defense.",
     parent: { name: "Bp. Andi Pratama", phone: "+62 812-1111-1111" },
     skills: [
-      { name: "Passing", value: 82 }, { name: "Shooting", value: 90 },
-      { name: "Dribbling", value: 85 }, { name: "Stamina", value: 84 },
+      { name: "Shooting", value: 90 }, { name: "Ball Handling", value: 82 },
+      { name: "Defense", value: 74 }, { name: "Athleticism", value: 84 },
     ],
-    achievements: ["Top Scorer U-12 League", "MVP Friendly Cup"],
+    achievements: ["Top Scorer KU-12 League", "MVP Friendly Cup"],
+    health: { status: "Healthy", updatedAt: "3 Jun 2026" },
   },
   {
-    id: "2", name: "Dimas Saputra", age: 11, position: "Midfielder", team: "U-12 A",
+    id: "2", name: "Dimas Saputra", age: 11, ageGroup: "KU-12", position: "Point Guard", team: "Garuda Elite",
     progress: 78, attendance: 88, status: "Good",
-    note: "Visi bermain bagus, perlu peningkatan kekuatan tendangan jarak jauh.",
+    note: "Court vision di atas rata-rata, perlu peningkatan finishing di paint dan pull-up jumper.",
     parent: { name: "Ibu Siti Rahayu", phone: "+62 812-2222-2222" },
     skills: [
-      { name: "Passing", value: 88 }, { name: "Shooting", value: 70 },
-      { name: "Dribbling", value: 78 }, { name: "Stamina", value: 80 },
+      { name: "Ball Handling", value: 88 }, { name: "Basketball IQ", value: 84 },
+      { name: "Shooting", value: 70 }, { name: "Athleticism", value: 76 },
     ],
-    achievements: ["Best Playmaker U-12"],
+    achievements: ["Best Playmaker KU-12"],
+    health: { status: "Minor Injury", note: "Ankle sprain ringan (grade 1) saat scrimmage", updatedAt: "2 Jun 2026", expectedReturn: "10 Jun 2026" },
   },
   {
-    id: "3", name: "Aldi Setiawan", age: 13, position: "Defender", team: "U-14 B",
+    id: "3", name: "Aldi Setiawan", age: 13, ageGroup: "KU-14", position: "Power Forward", team: "Falcons Blue",
     progress: 91, attendance: 96, status: "Great",
-    note: "Leader di lini belakang, komunikasi sangat baik.",
+    note: "Leader di post, rebounding & rim protection sangat baik. Perlu tambah range shot.",
     parent: { name: "Bp. Hendro Setiawan", phone: "+62 812-3333-3333" },
     skills: [
-      { name: "Tackling", value: 94 }, { name: "Heading", value: 90 },
-      { name: "Positioning", value: 92 }, { name: "Stamina", value: 88 },
+      { name: "Defense", value: 94 }, { name: "Athleticism", value: 90 },
+      { name: "Teamwork", value: 92 }, { name: "Shooting", value: 72 },
     ],
-    achievements: ["Captain U-14 B", "Iron Wall Award"],
+    achievements: ["Captain KU-14", "Iron Wall Award"],
+    health: { status: "Healthy", updatedAt: "3 Jun 2026" },
   },
   {
-    id: "4", name: "Bagas Kurniawan", age: 10, position: "Goalkeeper", team: "U-10",
+    id: "4", name: "Bagas Kurniawan", age: 10, ageGroup: "KU-10", position: "Center", team: "Young Warriors",
     progress: 72, attendance: 82, status: "Good",
-    note: "Refleks bagus, perlu latihan distribusi bola.",
+    note: "Frame besar, footwork post masih perlu drill. Free throw perlu latihan rutin.",
     parent: { name: "Ibu Lestari", phone: "+62 812-4444-4444" },
     skills: [
-      { name: "Reflex", value: 86 }, { name: "Distribution", value: 60 },
-      { name: "Positioning", value: 70 }, { name: "Catching", value: 78 },
+      { name: "Athleticism", value: 78 }, { name: "Defense", value: 70 },
+      { name: "Shooting", value: 60 }, { name: "Teamwork", value: 74 },
     ],
-    achievements: ["Best Save of the Month"],
+    achievements: ["Best Rebounder of the Month"],
+    health: { status: "Recovery", note: "Kembali dari knee tendinitis, load management aktif", updatedAt: "1 Jun 2026", expectedReturn: "15 Jun 2026" },
   },
   {
-    id: "5", name: "Reza Maulana", age: 13, position: "Forward", team: "U-14 A",
+    id: "5", name: "Reza Maulana", age: 13, ageGroup: "KU-14", position: "Small Forward", team: "Falcons Blue",
     progress: 88, attendance: 93, status: "Great",
-    note: "Pemain cepat, finishing dengan kaki kiri perlu diasah.",
+    note: "Slasher explosive, finishing tangan kiri perlu diasah. Defensive rotation makin bagus.",
     parent: { name: "Bp. Maulana", phone: "+62 812-5555-5555" },
     skills: [
-      { name: "Passing", value: 80 }, { name: "Shooting", value: 88 },
-      { name: "Dribbling", value: 92 }, { name: "Stamina", value: 86 },
+      { name: "Athleticism", value: 92 }, { name: "Ball Handling", value: 84 },
+      { name: "Shooting", value: 82 }, { name: "Defense", value: 80 },
     ],
-    achievements: ["Top Assist U-14"],
+    achievements: ["Top Assist KU-14"],
+    health: { status: "Healthy", updatedAt: "3 Jun 2026" },
   },
   {
-    id: "6", name: "Fajar Nugroho", age: 11, position: "Midfielder", team: "U-12 B",
+    id: "6", name: "Fajar Nugroho", age: 11, ageGroup: "KU-12", position: "Shooting Guard", team: "Phoenix Academy",
     progress: 68, attendance: 74, status: "Needs Focus",
-    note: "Perlu konsistensi latihan, attendance menurun bulan ini.",
+    note: "Attendance menurun, effort inkonsisten. Butuh sesi 1-on-1 dan komitmen dari orang tua.",
     parent: { name: "Ibu Wulan", phone: "+62 812-6666-6666" },
     skills: [
-      { name: "Passing", value: 70 }, { name: "Shooting", value: 65 },
-      { name: "Dribbling", value: 72 }, { name: "Stamina", value: 60 },
+      { name: "Shooting", value: 70 }, { name: "Ball Handling", value: 65 },
+      { name: "Defense", value: 58 }, { name: "Basketball IQ", value: 62 },
     ],
     achievements: [],
+    health: { status: "Not Available", note: "Izin akademik 2 minggu", updatedAt: "28 Mei 2026", expectedReturn: "12 Jun 2026" },
   },
   {
-    id: "7", name: "Iqbal Hakim", age: 14, position: "Defender", team: "U-14 A",
+    id: "7", name: "Iqbal Hakim", age: 14, ageGroup: "KU-14", position: "Point Guard", team: "Falcons Blue",
     progress: 84, attendance: 91, status: "Great",
-    note: "Bek modern, naik membantu serangan dengan baik.",
+    note: "Combo guard modern, pick-and-roll reads bagus. Perlu turunkan turnover rate.",
     parent: { name: "Bp. Hakim", phone: "+62 812-7777-7777" },
     skills: [
-      { name: "Tackling", value: 88 }, { name: "Passing", value: 82 },
-      { name: "Stamina", value: 90 }, { name: "Positioning", value: 84 },
+      { name: "Basketball IQ", value: 88 }, { name: "Ball Handling", value: 90 },
+      { name: "Shooting", value: 80 }, { name: "Teamwork", value: 86 },
     ],
-    achievements: ["Best Defender U-14"],
+    achievements: ["Best Floor General KU-14"],
+    health: { status: "Healthy", updatedAt: "3 Jun 2026" },
   },
   {
-    id: "8", name: "Yoga Pratama", age: 10, position: "Forward", team: "U-10",
+    id: "8", name: "Yoga Pratama", age: 10, ageGroup: "KU-10", position: "Small Forward", team: "Young Warriors",
     progress: 75, attendance: 86, status: "Good",
-    note: "Berbakat, perlu disiplin posisi saat bertahan.",
+    note: "Berbakat, learning speed tinggi. Disiplin help defense perlu dibangun.",
     parent: { name: "Ibu Maya", phone: "+62 812-8888-8888" },
     skills: [
-      { name: "Passing", value: 72 }, { name: "Shooting", value: 80 },
-      { name: "Dribbling", value: 82 }, { name: "Stamina", value: 70 },
+      { name: "Athleticism", value: 82 }, { name: "Shooting", value: 76 },
+      { name: "Ball Handling", value: 74 }, { name: "Basketball IQ", value: 70 },
     ],
     achievements: ["Rookie of the Month"],
+    health: { status: "Healthy", updatedAt: "3 Jun 2026" },
   },
 ];
 
-export const TEAMS = ["U-10", "U-12 A", "U-12 B", "U-14 A", "U-14 B"] as const;
-export const POSITIONS = ["Goalkeeper", "Defender", "Midfielder", "Forward"] as const;
+export const TEAMS = ["Garuda Elite", "Falcons Blue", "Young Warriors", "Phoenix Academy"] as const;
+export const AGE_GROUPS = ["KU-8", "KU-10", "KU-12", "KU-14", "KU-16", "KU-18"] as const;
+export const POSITIONS = ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center"] as const;
+
+export const HEALTH_STATUSES: HealthStatus[] = ["Healthy", "Minor Injury", "Recovery", "Not Available"];
+
+export function healthStatusColor(s: HealthStatus) {
+  if (s === "Healthy") return "bg-primary-soft text-primary";
+  if (s === "Minor Injury") return "bg-amber-100 text-amber-800";
+  if (s === "Recovery") return "bg-blue-100 text-blue-800";
+  return "bg-red-100 text-red-700";
+}
+
+export function getInjurySummary(athletes: Athlete[] = ATHLETES) {
+  const counts: Record<HealthStatus, number> = {
+    Healthy: 0, "Minor Injury": 0, Recovery: 0, "Not Available": 0,
+  };
+  for (const a of athletes) counts[a.health.status]++;
+  const total = athletes.length;
+  const availabilityRate = total === 0 ? 0 : Math.round((counts.Healthy / total) * 100);
+  return { counts, total, availabilityRate };
+}
