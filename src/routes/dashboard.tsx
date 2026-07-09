@@ -6,11 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Activity, ArrowUpRight, CalendarCheck, CreditCard, Trophy, UsersRound,
   Wallet, TrendingUp, ClipboardCheck, ClipboardList, MessageSquare, Plus,
-  FileBarChart, Download, Megaphone, Award, Star,
+  FileBarChart, Download, Megaphone, Award, Star, HeartPulse,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { useRole, ROLE_USERS } from "@/lib/role";
-import { ATHLETES } from "@/lib/demo-data";
+import { ATHLETES, getInjurySummary, healthStatusColor, HEALTH_STATUSES } from "@/lib/demo-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
@@ -125,6 +125,50 @@ function LineChart({ title, subtitle, points, max = 100 }: { title: string; subt
   );
 }
 
+function InjurySummary({ athleteFilter }: { athleteFilter?: (a: typeof ATHLETES[number]) => boolean }) {
+  const pool = athleteFilter ? ATHLETES.filter(athleteFilter) : ATHLETES;
+  const { counts, total, availabilityRate } = getInjurySummary(pool);
+  const injuredList = pool.filter((a) => a.health.status !== "Healthy").slice(0, 3);
+  return (
+    <Card className="border-border/70">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <HeartPulse className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-lg font-semibold">Injury Summary</h2>
+          </div>
+          <Badge variant="secondary" className="bg-primary-soft text-primary">{availabilityRate}% available</Badge>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {HEALTH_STATUSES.map((s) => (
+            <div key={s} className="rounded-lg border border-border p-3 text-center">
+              <p className="font-display text-xl font-bold">{counts[s]}</p>
+              <Badge variant="secondary" className={`mt-1 ${healthStatusColor(s)}`}>{s}</Badge>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">{total} atlet dipantau</p>
+        {injuredList.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">Perlu Perhatian</p>
+            {injuredList.map((a) => (
+              <Link key={a.id} to="/athletes/$athleteId" params={{ athleteId: a.id }} className="flex items-center justify-between rounded-lg border border-border p-2 transition hover:bg-secondary/50">
+                <div>
+                  <p className="text-sm font-medium">{a.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{a.team} · {a.position}</p>
+                </div>
+                <Badge variant="secondary" className={healthStatusColor(a.health.status)}>{a.health.status}</Badge>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
+
 /* ---------- OWNER ---------- */
 function OwnerDashboard({ userName }: { userName: string }) {
   return (
@@ -167,6 +211,8 @@ function OwnerDashboard({ userName }: { userName: string }) {
           { label: "Export Academy Summary", icon: Download, onClick: () => toast.success("Summary exported (demo)") },
         ]} />
       </div>
+
+      <div className="mt-6"><InjurySummary /></div>
     </DashboardLayout>
   );
 }
@@ -232,6 +278,8 @@ function AdminDashboard({ userName }: { userName: string }) {
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-6"><InjurySummary /></div>
     </DashboardLayout>
   );
 }
@@ -293,6 +341,8 @@ function CoachDashboard({ userName }: { userName: string }) {
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-6"><InjurySummary /></div>
     </DashboardLayout>
   );
 }
@@ -375,6 +425,8 @@ function ParentDashboard({ userName }: { userName: string }) {
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-6"><InjurySummary athleteFilter={(a) => a.id === child.id} /></div>
     </DashboardLayout>
   );
 }
