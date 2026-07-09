@@ -125,6 +125,47 @@ function LineChart({ title, subtitle, points, max = 100 }: { title: string; subt
   );
 }
 
+function InjurySummary({ athleteFilter }: { athleteFilter?: (a: typeof ATHLETES[number]) => boolean }) {
+  const pool = athleteFilter ? ATHLETES.filter(athleteFilter) : ATHLETES;
+  const { counts, total, availabilityRate } = getInjurySummary(pool);
+  const injuredList = pool.filter((a) => a.health.status !== "Healthy").slice(0, 3);
+  return (
+    <Card className="border-border/70">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <HeartPulse className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-lg font-semibold">Injury Summary</h2>
+          </div>
+          <Badge variant="secondary" className="bg-primary-soft text-primary">{availabilityRate}% available</Badge>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {HEALTH_STATUSES.map((s) => (
+            <div key={s} className="rounded-lg border border-border p-3 text-center">
+              <p className="font-display text-xl font-bold">{counts[s]}</p>
+              <Badge variant="secondary" className={`mt-1 ${healthStatusColor(s)}`}>{s}</Badge>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">{total} atlet dipantau</p>
+        {injuredList.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">Perlu Perhatian</p>
+            {injuredList.map((a) => (
+              <Link key={a.id} to="/athletes/$athleteId" params={{ athleteId: a.id }} className="flex items-center justify-between rounded-lg border border-border p-2 transition hover:bg-secondary/50">
+                <div>
+                  <p className="text-sm font-medium">{a.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{a.team} · {a.position}</p>
+                </div>
+                <Badge variant="secondary" className={healthStatusColor(a.health.status)}>{a.health.status}</Badge>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
 /* ---------- OWNER ---------- */
 function OwnerDashboard({ userName }: { userName: string }) {
   return (
