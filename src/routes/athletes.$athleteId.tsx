@@ -180,35 +180,8 @@ function AthleteDetail() {
                     <p className="mt-2 text-sm text-muted-foreground">"Konsentrasi saat sesi sangat baik. Lanjutkan!"</p>
                   </div>
                 </TabsContent>
-                <TabsContent value="assessments" className="mt-4 space-y-3">
-                  {(() => {
-                    const pa = PERIODIC_ASSESSMENTS.find((p) => p.athleteId === a.id) ?? PERIODIC_ASSESSMENTS[0];
-                    return (
-                      <>
-                        <div className="flex items-center justify-between rounded-xl border border-border p-4">
-                          <div>
-                            <p className="text-sm font-semibold">Periodic Assessment</p>
-                            <p className="text-xs text-muted-foreground">{pa.date}</p>
-                          </div>
-                          <Badge variant="secondary" className={pa.status === "Final" ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>{pa.status}</Badge>
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {SKILL_CATEGORIES.map((c) => (
-                            <div key={c} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                              <span>{c}</span>
-                              <span className="font-display font-bold text-primary">{pa.current[c]} · {SKILL_SCALE[pa.current[c]-1]?.label}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="rounded-xl border border-border p-4">
-                          <p className="text-xs font-semibold uppercase text-muted-foreground">Recommendations</p>
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-                            {pa.recommendations.map((r) => <li key={r}>{r}</li>)}
-                          </ul>
-                        </div>
-                      </>
-                    );
-                  })()}
+                <TabsContent value="assessments" className="mt-4 space-y-4">
+                  <AssessmentsTab athleteId={a.id} />
                 </TabsContent>
                 <TabsContent value="radar" className="mt-4">
                   {(() => {
