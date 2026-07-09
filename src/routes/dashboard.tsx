@@ -278,6 +278,8 @@ function AdminDashboard({ userName }: { userName: string }) {
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-6"><InjurySummary /></div>
     </DashboardLayout>
   );
 }
