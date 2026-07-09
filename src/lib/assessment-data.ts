@@ -122,6 +122,78 @@ export function calcPIR(s: MatchStat) {
   );
 }
 
+/* ---------- Per-athlete session evaluation (basketball skill categories) ---------- */
+
+export type SessionSkillEvaluation = Record<SkillCategory, number>;
+
+export const DEFAULT_SESSION_EVAL: SessionSkillEvaluation = {
+  Shooting: 3, "Ball Handling": 3, Defense: 3, Athleticism: 3, "Basketball IQ": 3, Teamwork: 3,
+};
+
+/* ---------- Evaluation timeline logs ---------- */
+
+export type EvaluationLog = {
+  id: string;
+  athleteId: string;
+  date: string;                  // ISO date
+  dateLabel: string;             // display
+  sessionTitle: string;
+  coach: string;
+  category: SkillCategory;
+  score: number;                 // 1-5
+  note: string;
+};
+
+const COACHES = ["Coach Bayu", "Coach Andre", "Coach Rangga", "Coach Dito"];
+
+function seededScore(seed: number, min = 2, max = 5) {
+  const r = Math.sin(seed) * 10000;
+  const f = r - Math.floor(r);
+  return Math.min(max, Math.max(min, Math.round(min + f * (max - min))));
+}
+
+export const EVALUATION_LOGS: EvaluationLog[] = (() => {
+  const out: EvaluationLog[] = [];
+  const dates = [
+    { iso: "2026-06-03", label: "3 Jun 2026", title: "Latihan Teknik", month: "Jun" },
+    { iso: "2026-05-27", label: "27 Mei 2026", title: "Skrimej Internal", month: "Mei" },
+    { iso: "2026-05-20", label: "20 Mei 2026", title: "Half-court Sets", month: "Mei" },
+    { iso: "2026-05-13", label: "13 Mei 2026", title: "Shooting Drills", month: "Mei" },
+    { iso: "2026-04-29", label: "29 Apr 2026", title: "Conditioning", month: "Apr" },
+    { iso: "2026-04-15", label: "15 Apr 2026", title: "Defense Fundamentals", month: "Apr" },
+  ];
+  let id = 1;
+  ATHLETES.forEach((a, ai) => {
+    dates.forEach((d, di) => {
+      SKILL_CATEGORIES.forEach((c, ci) => {
+        out.push({
+          id: `ev${id++}`,
+          athleteId: a.id,
+          date: d.iso,
+          dateLabel: d.label,
+          sessionTitle: d.title,
+          coach: COACHES[(ai + di) % COACHES.length],
+          category: c,
+          score: seededScore(ai * 31 + di * 7 + ci * 3),
+          note: [
+            "Eksekusi teknik semakin bersih",
+            "Perlu fokus pada footwork",
+            "Konsistensi meningkat dari sesi lalu",
+            "Effort sangat baik hari ini",
+            "Butuh drill tambahan minggu depan",
+          ][(ai + ci + di) % 5],
+        });
+      });
+    });
+  });
+  return out;
+})();
+
+export function getAthleteEvaluations(athleteId: string) {
+  return EVALUATION_LOGS.filter((e) => e.athleteId === athleteId);
+}
+
+/* Legacy — kept for backwards compat in case anything imports it */
 export type SessionEvaluation = {
   effort: number; technique: number; consistency: number; focus: number; attitude: number;
 };
