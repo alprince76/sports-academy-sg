@@ -165,6 +165,9 @@ function InjurySummary({ athleteFilter }: { athleteFilter?: (a: typeof ATHLETES[
       </CardContent>
     </Card>
   );
+}
+
+
 
 /* ---------- OWNER ---------- */
 function OwnerDashboard({ userName }: { userName: string }) {
