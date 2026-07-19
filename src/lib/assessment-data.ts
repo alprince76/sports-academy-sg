@@ -19,6 +19,8 @@ export const SKILL_SCALE = [
   { v: 5, label: "Advanced" },
 ];
 
+export type AssessmentStatus = "Draft" | "Reviewed" | "Published";
+
 export type PeriodicAssessment = {
   athleteId: string;
   athleteName: string;
@@ -28,7 +30,7 @@ export type PeriodicAssessment = {
   previous: Record<SkillCategory, number>;
   recommendations: string[];
   coachNote: string;
-  status: "Draft" | "Final";
+  status: AssessmentStatus;
 };
 
 const mk = (
@@ -69,7 +71,7 @@ export const PERIODIC_ASSESSMENTS: PeriodicAssessment[] = ATHLETES.map((a, i) =>
       "Tingkatkan komunikasi saat transisi defense.",
     ],
     coachNote: a.note,
-    status: i % 5 === 0 ? "Draft" : "Final",
+    status: i % 5 === 0 ? "Draft" : i % 3 === 0 ? "Reviewed" : "Published",
   };
 });
 

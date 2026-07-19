@@ -8,41 +8,54 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RadarChart } from "@/components/site/RadarChart";
 import {
-  PERIODIC_ASSESSMENTS, MATCH_STATS, SKILL_CATEGORIES, SKILL_SCALE, calcPIR,
+  PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE,
+  type AssessmentStatus,
 } from "@/lib/assessment-data";
-import { Save, FileCheck2, Target } from "lucide-react";
+import { Save, FileCheck2, Target, Send, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/assessment")({
-  head: () => ({ meta: [{ title: "Athlete Assessment — SportAcademy" }] }),
+  head: () => ({ meta: [{ title: "Skill Assessment — SportAcademy" }] }),
   component: AssessmentPage,
 });
+
+const STATUS_STYLE: Record<AssessmentStatus, string> = {
+  Draft: "bg-amber-100 text-amber-800",
+  Reviewed: "bg-blue-100 text-blue-800",
+  Published: "bg-primary-soft text-primary",
+};
 
 function AssessmentPage() {
   return (
     <DashboardLayout
-      title="Athlete Assessment"
-      subtitle="Evaluasi performa pertandingan (PIR/FIBA) dan perkembangan skill atlet"
+      title="Skill Assessment"
+      subtitle="Assessment periodik 4–6 minggu. Hanya status 'Published' yang tampil ke orang tua."
     >
-      <Tabs defaultValue="skill">
+      <Tabs defaultValue="list">
         <TabsList>
-          <TabsTrigger value="skill">Skill Assessment</TabsTrigger>
-          <TabsTrigger value="match">Match Statistics (PIR)</TabsTrigger>
-          <TabsTrigger value="new">New Periodic Assessment</TabsTrigger>
+          <TabsTrigger value="list">Assessment Management</TabsTrigger>
+          <TabsTrigger value="new">New / Edit Assessment</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="skill" className="mt-6">
+        <TabsContent value="list" className="mt-6">
           <Card className="border-border/70">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-display text-lg font-semibold">Periodic Skill Assessments</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">Penilaian resmi setiap 4–6 minggu. Skala 1–5.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Sumber input: Session Evaluation history + Attendance + PIR (KU-12+).
+                  </p>
                 </div>
-                <Badge variant="secondary" className="bg-primary-soft text-primary">{PERIODIC_ASSESSMENTS.length} atlet</Badge>
+                <div className="flex gap-2 text-xs">
+                  {(["Draft", "Reviewed", "Published"] as AssessmentStatus[]).map((s) => (
+                    <Badge key={s} variant="secondary" className={STATUS_STYLE[s]}>
+                      {PERIODIC_ASSESSMENTS.filter((p) => p.status === s).length} {s}
+                    </Badge>
+                  ))}
+                </div>
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -58,7 +71,7 @@ function AssessmentPage() {
                           <p className="truncate text-sm font-semibold">{p.athleteName}</p>
                           <p className="text-xs text-muted-foreground">{p.team} · {p.date}</p>
                         </div>
-                        <Badge variant="secondary" className={p.status === "Final" ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>{p.status}</Badge>
+                        <Badge variant="secondary" className={STATUS_STYLE[p.status]}>{p.status}</Badge>
                       </div>
                       <div className="mt-3 flex items-end justify-between">
                         <div>
@@ -69,59 +82,24 @@ function AssessmentPage() {
                           {parseFloat(delta) >= 0 ? "▲" : "▼"} {Math.abs(parseFloat(delta))} vs prev
                         </span>
                       </div>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {p.status === "Draft" && (
+                          <Button size="sm" variant="secondary" className="text-xs" onClick={() => toast.success(`${p.athleteName} → Reviewed`)}>
+                            <Eye className="mr-1 h-3 w-3" />Send for Review
+                          </Button>
+                        )}
+                        {p.status === "Reviewed" && (
+                          <Button size="sm" className="text-xs" onClick={() => toast.success(`${p.athleteName} → Published`, { description: "Visible di Parent Portal" })}>
+                            <Send className="mr-1 h-3 w-3" />Publish
+                          </Button>
+                        )}
+                        {p.status === "Published" && (
+                          <Badge variant="secondary" className="bg-primary-soft text-[10px] text-primary">Visible ke orang tua</Badge>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="match" className="mt-6 space-y-6">
-          <Card className="border-border/70">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Match Statistics (PIR/FIBA)</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">PIR = PTS + REB + AST + STL + BLK + Fouls Drawn − Missed FG − Missed FT − TO − Fouls</p>
-                </div>
-                <Badge variant="secondary" className="bg-accent text-accent-foreground">KU-12 ke atas</Badge>
-              </div>
-              <div className="mt-4 overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Atlet</TableHead>
-                      <TableHead>Opponent</TableHead>
-                      <TableHead>MIN</TableHead>
-                      <TableHead>PTS</TableHead>
-                      <TableHead>REB</TableHead>
-                      <TableHead>AST</TableHead>
-                      <TableHead>STL</TableHead>
-                      <TableHead>BLK</TableHead>
-                      <TableHead>TO</TableHead>
-                      <TableHead>+/−</TableHead>
-                      <TableHead className="text-right">PIR</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {MATCH_STATS.map((s) => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-medium">{s.athleteName}</TableCell>
-                        <TableCell className="text-muted-foreground">{s.opponent}</TableCell>
-                        <TableCell>{s.min}</TableCell>
-                        <TableCell>{s.pts}</TableCell>
-                        <TableCell>{s.reb}</TableCell>
-                        <TableCell>{s.ast}</TableCell>
-                        <TableCell>{s.stl}</TableCell>
-                        <TableCell>{s.blk}</TableCell>
-                        <TableCell>{s.to}</TableCell>
-                        <TableCell className={s.pm >= 0 ? "text-primary" : "text-destructive"}>{s.pm > 0 ? `+${s.pm}` : s.pm}</TableCell>
-                        <TableCell className="text-right font-display font-bold text-primary">{calcPIR(s)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
               </div>
             </CardContent>
           </Card>
@@ -141,9 +119,6 @@ function NewAssessmentForm() {
     Object.fromEntries(SKILL_CATEGORIES.map((c) => [c, athlete.current[c]]))
   );
   const [note, setNote] = useState(athlete.coachNote);
-
-  const handleFinalize = () => toast.success("Assessment finalized", { description: `${athlete.athleteName} — visible to parent` });
-  const handleDraft = () => toast.success("Draft saved");
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -175,8 +150,11 @@ function NewAssessmentForm() {
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-28" />
           </div>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <Button variant="outline" onClick={handleDraft}><Save className="mr-1 h-4 w-4" />Save Draft</Button>
-            <Button onClick={handleFinalize}><FileCheck2 className="mr-1 h-4 w-4" />Finalize Assessment</Button>
+            <Button variant="outline" onClick={() => toast.success("Draft saved")}><Save className="mr-1 h-4 w-4" />Save Draft</Button>
+            <Button variant="outline" onClick={() => toast.success("Marked as Reviewed")}><FileCheck2 className="mr-1 h-4 w-4" />Mark Reviewed</Button>
+            <Button onClick={() => toast.success("Published", { description: `${athlete.athleteName} — visible ke orang tua` })}>
+              <Send className="mr-1 h-4 w-4" />Publish to Parent
+            </Button>
           </div>
         </CardContent>
       </Card>
