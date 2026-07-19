@@ -263,7 +263,7 @@ function AssessmentsTab({ athleteId }: { athleteId: string }) {
           <p className="text-sm font-semibold">Periodic Assessment</p>
           <p className="text-xs text-muted-foreground">{pa.date}</p>
         </div>
-        <Badge variant="secondary" className={pa.status === "Final" ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>{pa.status}</Badge>
+        <Badge variant="secondary" className={pa.status === "Published" ? "bg-primary-soft text-primary" : pa.status === "Reviewed" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800"}>{pa.status}</Badge>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
