@@ -19,6 +19,8 @@ export const SKILL_SCALE = [
   { v: 5, label: "Advanced" },
 ];
 
+export type AssessmentStatus = "Draft" | "Reviewed" | "Published";
+
 export type PeriodicAssessment = {
   athleteId: string;
   athleteName: string;
@@ -28,7 +30,7 @@ export type PeriodicAssessment = {
   previous: Record<SkillCategory, number>;
   recommendations: string[];
   coachNote: string;
-  status: "Draft" | "Final";
+  status: AssessmentStatus;
 };
 
 const mk = (
