@@ -10,7 +10,7 @@ import { Plus, Search, Star, Archive, Copy, Clock, Dumbbell } from "lucide-react
 import { toast } from "sonner";
 import { DRILLS, DRILL_CATEGORIES, BLOCK_META, type DrillCategory } from "@/lib/training-data";
 
-export const Route = createFileRoute("/drills")({
+export const Route = createFileRoute("/drills/")({
   head: () => ({ meta: [{ title: "Drill Library — SportAcademy" }] }),
   component: DrillsPage,
 });

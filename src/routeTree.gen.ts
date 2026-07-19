@@ -10,12 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SessionBuilderRouteImport } from './routes/session-builder'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as RevenueRouteImport } from './routes/revenue'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ProgramsRouteImport } from './routes/programs'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as MyAthletesRouteImport } from './routes/my-athletes'
+import { Route as MatchPerformanceRouteImport } from './routes/match-performance'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as EvaluationsRouteImport } from './routes/evaluations'
@@ -26,13 +29,20 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AssessmentRouteImport } from './routes/assessment'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training.index'
+import { Route as DrillsIndexRouteImport } from './routes/drills.index'
 import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
 import { Route as TrainingSessionIdRouteImport } from './routes/training.$sessionId'
+import { Route as DrillsNewRouteImport } from './routes/drills.new'
 import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athleteId'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SessionBuilderRoute = SessionBuilderRouteImport.update({
+  id: '/session-builder',
+  path: '/session-builder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScheduleRoute = ScheduleRouteImport.update({
@@ -55,6 +65,11 @@ const ProgressRoute = ProgressRouteImport.update({
   path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProgramsRoute = ProgramsRouteImport.update({
+  id: '/programs',
+  path: '/programs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
@@ -63,6 +78,11 @@ const PaymentsRoute = PaymentsRouteImport.update({
 const MyAthletesRoute = MyAthletesRouteImport.update({
   id: '/my-athletes',
   path: '/my-athletes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchPerformanceRoute = MatchPerformanceRouteImport.update({
+  id: '/match-performance',
+  path: '/match-performance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -115,6 +135,11 @@ const TrainingIndexRoute = TrainingIndexRouteImport.update({
   path: '/training/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DrillsIndexRoute = DrillsIndexRouteImport.update({
+  id: '/drills/',
+  path: '/drills/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AthletesIndexRoute = AthletesIndexRouteImport.update({
   id: '/athletes/',
   path: '/athletes/',
@@ -123,6 +148,11 @@ const AthletesIndexRoute = AthletesIndexRouteImport.update({
 const TrainingSessionIdRoute = TrainingSessionIdRouteImport.update({
   id: '/training/$sessionId',
   path: '/training/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DrillsNewRoute = DrillsNewRouteImport.update({
+  id: '/drills/new',
+  path: '/drills/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AthletesAthleteIdRoute = AthletesAthleteIdRouteImport.update({
@@ -141,16 +171,21 @@ export interface FileRoutesByFullPath {
   '/evaluations': typeof EvaluationsRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
+  '/match-performance': typeof MatchPerformanceRoute
   '/my-athletes': typeof MyAthletesRoute
   '/payments': typeof PaymentsRoute
+  '/programs': typeof ProgramsRoute
   '/progress': typeof ProgressRoute
   '/reports': typeof ReportsRoute
   '/revenue': typeof RevenueRoute
   '/schedule': typeof ScheduleRoute
+  '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/drills/new': typeof DrillsNewRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes/': typeof AthletesIndexRoute
+  '/drills/': typeof DrillsIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
 export interface FileRoutesByTo {
@@ -163,16 +198,21 @@ export interface FileRoutesByTo {
   '/evaluations': typeof EvaluationsRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
+  '/match-performance': typeof MatchPerformanceRoute
   '/my-athletes': typeof MyAthletesRoute
   '/payments': typeof PaymentsRoute
+  '/programs': typeof ProgramsRoute
   '/progress': typeof ProgressRoute
   '/reports': typeof ReportsRoute
   '/revenue': typeof RevenueRoute
   '/schedule': typeof ScheduleRoute
+  '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/drills/new': typeof DrillsNewRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes': typeof AthletesIndexRoute
+  '/drills': typeof DrillsIndexRoute
   '/training': typeof TrainingIndexRoute
 }
 export interface FileRoutesById {
@@ -186,16 +226,21 @@ export interface FileRoutesById {
   '/evaluations': typeof EvaluationsRoute
   '/insights': typeof InsightsRoute
   '/login': typeof LoginRoute
+  '/match-performance': typeof MatchPerformanceRoute
   '/my-athletes': typeof MyAthletesRoute
   '/payments': typeof PaymentsRoute
+  '/programs': typeof ProgramsRoute
   '/progress': typeof ProgressRoute
   '/reports': typeof ReportsRoute
   '/revenue': typeof RevenueRoute
   '/schedule': typeof ScheduleRoute
+  '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/drills/new': typeof DrillsNewRoute
   '/training/$sessionId': typeof TrainingSessionIdRoute
   '/athletes/': typeof AthletesIndexRoute
+  '/drills/': typeof DrillsIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
 export interface FileRouteTypes {
@@ -210,16 +255,21 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/insights'
     | '/login'
+    | '/match-performance'
     | '/my-athletes'
     | '/payments'
+    | '/programs'
     | '/progress'
     | '/reports'
     | '/revenue'
     | '/schedule'
+    | '/session-builder'
     | '/settings'
     | '/athletes/$athleteId'
+    | '/drills/new'
     | '/training/$sessionId'
     | '/athletes/'
+    | '/drills/'
     | '/training/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -232,16 +282,21 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/insights'
     | '/login'
+    | '/match-performance'
     | '/my-athletes'
     | '/payments'
+    | '/programs'
     | '/progress'
     | '/reports'
     | '/revenue'
     | '/schedule'
+    | '/session-builder'
     | '/settings'
     | '/athletes/$athleteId'
+    | '/drills/new'
     | '/training/$sessionId'
     | '/athletes'
+    | '/drills'
     | '/training'
   id:
     | '__root__'
@@ -254,16 +309,21 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/insights'
     | '/login'
+    | '/match-performance'
     | '/my-athletes'
     | '/payments'
+    | '/programs'
     | '/progress'
     | '/reports'
     | '/revenue'
     | '/schedule'
+    | '/session-builder'
     | '/settings'
     | '/athletes/$athleteId'
+    | '/drills/new'
     | '/training/$sessionId'
     | '/athletes/'
+    | '/drills/'
     | '/training/'
   fileRoutesById: FileRoutesById
 }
@@ -277,16 +337,21 @@ export interface RootRouteChildren {
   EvaluationsRoute: typeof EvaluationsRoute
   InsightsRoute: typeof InsightsRoute
   LoginRoute: typeof LoginRoute
+  MatchPerformanceRoute: typeof MatchPerformanceRoute
   MyAthletesRoute: typeof MyAthletesRoute
   PaymentsRoute: typeof PaymentsRoute
+  ProgramsRoute: typeof ProgramsRoute
   ProgressRoute: typeof ProgressRoute
   ReportsRoute: typeof ReportsRoute
   RevenueRoute: typeof RevenueRoute
   ScheduleRoute: typeof ScheduleRoute
+  SessionBuilderRoute: typeof SessionBuilderRoute
   SettingsRoute: typeof SettingsRoute
   AthletesAthleteIdRoute: typeof AthletesAthleteIdRoute
+  DrillsNewRoute: typeof DrillsNewRoute
   TrainingSessionIdRoute: typeof TrainingSessionIdRoute
   AthletesIndexRoute: typeof AthletesIndexRoute
+  DrillsIndexRoute: typeof DrillsIndexRoute
   TrainingIndexRoute: typeof TrainingIndexRoute
 }
 
@@ -297,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/session-builder': {
+      id: '/session-builder'
+      path: '/session-builder'
+      fullPath: '/session-builder'
+      preLoaderRoute: typeof SessionBuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedule': {
@@ -327,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/programs': {
+      id: '/programs'
+      path: '/programs'
+      fullPath: '/programs'
+      preLoaderRoute: typeof ProgramsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/payments': {
       id: '/payments'
       path: '/payments'
@@ -339,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/my-athletes'
       fullPath: '/my-athletes'
       preLoaderRoute: typeof MyAthletesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/match-performance': {
+      id: '/match-performance'
+      path: '/match-performance'
+      fullPath: '/match-performance'
+      preLoaderRoute: typeof MatchPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -411,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/drills/': {
+      id: '/drills/'
+      path: '/drills'
+      fullPath: '/drills/'
+      preLoaderRoute: typeof DrillsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/athletes/': {
       id: '/athletes/'
       path: '/athletes'
@@ -423,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/training/$sessionId'
       fullPath: '/training/$sessionId'
       preLoaderRoute: typeof TrainingSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drills/new': {
+      id: '/drills/new'
+      path: '/drills/new'
+      fullPath: '/drills/new'
+      preLoaderRoute: typeof DrillsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/athletes/$athleteId': {
@@ -445,16 +545,21 @@ const rootRouteChildren: RootRouteChildren = {
   EvaluationsRoute: EvaluationsRoute,
   InsightsRoute: InsightsRoute,
   LoginRoute: LoginRoute,
+  MatchPerformanceRoute: MatchPerformanceRoute,
   MyAthletesRoute: MyAthletesRoute,
   PaymentsRoute: PaymentsRoute,
+  ProgramsRoute: ProgramsRoute,
   ProgressRoute: ProgressRoute,
   ReportsRoute: ReportsRoute,
   RevenueRoute: RevenueRoute,
   ScheduleRoute: ScheduleRoute,
+  SessionBuilderRoute: SessionBuilderRoute,
   SettingsRoute: SettingsRoute,
   AthletesAthleteIdRoute: AthletesAthleteIdRoute,
+  DrillsNewRoute: DrillsNewRoute,
   TrainingSessionIdRoute: TrainingSessionIdRoute,
   AthletesIndexRoute: AthletesIndexRoute,
+  DrillsIndexRoute: DrillsIndexRoute,
   TrainingIndexRoute: TrainingIndexRoute,
 }
 export const routeTree = rootRouteImport
