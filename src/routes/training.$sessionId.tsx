@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Check, Save, ClipboardList, AlertCircle } from "lucide-react";
+import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
 import { SESSIONS } from "./training.index";
@@ -52,7 +52,13 @@ function SessionPage() {
     <DashboardLayout
       title={session.title}
       subtitle={`${session.coach} · ${session.team} · ${session.date}, ${session.time}`}
-      actions={<Button asChild variant="outline"><Link to="/training"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline"><Link to="/training"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>
+          <Button asChild variant="outline"><Link to="/training/$sessionId/print" params={{ sessionId }}><Printer className="mr-1 h-4 w-4" />Print Assessment Sheet</Link></Button>
+          <Button asChild><Link to="/assessment/import"><ScanLine className="mr-1 h-4 w-4" />Upload Scanned Sheet</Link></Button>
+        </div>
+      }
     >
       <Tabs defaultValue="session-eval">
         <TabsList>
