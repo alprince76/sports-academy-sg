@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import {
   PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE,
   type AssessmentStatus,
 } from "@/lib/assessment-data";
-import { Save, FileCheck2, Target, Send, Eye } from "lucide-react";
+import { Save, FileCheck2, Target, Send, Eye, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/assessment")({
@@ -32,6 +32,7 @@ function AssessmentPage() {
     <DashboardLayout
       title="Skill Assessment"
       subtitle="Assessment periodik 4–6 minggu. Hanya status 'Published' yang tampil ke orang tua."
+      actions={<Button asChild><Link to="/assessment/import"><ScanLine className="mr-1 h-4 w-4" />Import from Scan (OCR)</Link></Button>}
     >
       <Tabs defaultValue="list">
         <TabsList>
