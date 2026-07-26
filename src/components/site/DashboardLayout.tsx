@@ -5,7 +5,7 @@ import {
   Activity, CalendarCheck, ChartLine, CreditCard, Home, LogOut, Settings, Trophy,
   UsersRound, Menu, Bell, Search, Megaphone, Building2, ClipboardList,
   Sparkles, Heart, MessageSquare, TrendingUp, Wallet, Target, BarChart3,
-  BookOpen, LayoutTemplate, Dumbbell, QrCode, Award,
+  BookOpen, LayoutTemplate, Dumbbell, Award, ScanLine,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,8 +37,8 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
-    { icon: QrCode, label: "Attendance", to: "/attendance" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
+    { icon: ScanLine, label: "OCR Import", to: "/assessment/import" },
     { icon: Award, label: "Match Performance", to: "/match-performance" },
     { icon: BarChart3, label: "Assessment Insights", to: "/insights" },
     { icon: CreditCard, label: "Payments", to: "/payments" },
@@ -52,8 +52,8 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
-    { icon: QrCode, label: "Attendance (QR)", to: "/attendance" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
+    { icon: ScanLine, label: "OCR Import", to: "/assessment/import" },
     { icon: Award, label: "Match Performance (PIR)", to: "/match-performance" },
     { icon: BarChart3, label: "Assessment Insights", to: "/insights" },
     { icon: UsersRound, label: "My Athletes", to: "/my-athletes" },
