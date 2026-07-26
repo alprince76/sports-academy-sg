@@ -17,7 +17,7 @@ function ProgramsPage() {
     <DashboardLayout
       title="Training Programs"
       subtitle="Rencana pengembangan jangka panjang. Setiap program terdiri dari beberapa Session Builder."
-      actions={<Button><Plus className="mr-1 h-4 w-4" />Buat Program</Button>}
+      actions={<Button asChild><Link to="/programs/new"><Plus className="mr-1 h-4 w-4" />Buat Program</Link></Button>}
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {TRAINING_PROGRAMS.map((p) => (
