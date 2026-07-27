@@ -13,6 +13,9 @@ import {
   PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE,
   type AssessmentStatus,
 } from "@/lib/assessment-data";
+import { ATHLETES } from "@/lib/demo-data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Save, FileCheck2, Target, Send, Eye, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 
@@ -115,21 +118,44 @@ function AssessmentPage() {
 }
 
 function NewAssessmentForm() {
-  const athlete = PERIODIC_ASSESSMENTS[0];
+  const [athleteId, setAthleteId] = useState(ATHLETES[0].id);
+  const athlete = ATHLETES.find((a) => a.id === athleteId) ?? ATHLETES[0];
+  const existing = PERIODIC_ASSESSMENTS.find((p) => p.athleteId === athleteId);
+  const previous = existing?.previous ?? Object.fromEntries(SKILL_CATEGORIES.map((c) => [c, 3]));
   const [scores, setScores] = useState<Record<string, number>>(
-    Object.fromEntries(SKILL_CATEGORIES.map((c) => [c, athlete.current[c]]))
+    Object.fromEntries(SKILL_CATEGORIES.map((c) => [c, existing?.current[c] ?? 3]))
   );
-  const [note, setNote] = useState(athlete.coachNote);
+  const [note, setNote] = useState(existing?.coachNote ?? "");
+
+  const onPickAthlete = (id: string) => {
+    setAthleteId(id);
+    const next = PERIODIC_ASSESSMENTS.find((p) => p.athleteId === id);
+    setScores(Object.fromEntries(SKILL_CATEGORIES.map((c) => [c, next?.current[c] ?? 3])));
+    setNote(next?.coachNote ?? "");
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <Card className="border-border/70">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-primary" />
-            <div>
-              <h2 className="font-display text-lg font-semibold">Periodic Skill Assessment</h2>
-              <p className="text-xs text-muted-foreground">Atlet: {athlete.athleteName} · {athlete.team}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Target className="h-5 w-5 text-primary" />
+              <div>
+                <h2 className="font-display text-lg font-semibold">Periodic Skill Assessment</h2>
+                <p className="text-xs text-muted-foreground">{athlete.team} · {athlete.position}</p>
+              </div>
+            </div>
+            <div className="grid w-full max-w-xs gap-2 sm:w-56">
+              <Label>Pilih Atlet</Label>
+              <Select value={athleteId} onValueChange={onPickAthlete}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ATHLETES.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
@@ -151,9 +177,13 @@ function NewAssessmentForm() {
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-28" />
           </div>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <Button variant="outline" onClick={() => toast.success("Draft saved")}><Save className="mr-1 h-4 w-4" />Save Draft</Button>
-            <Button variant="outline" onClick={() => toast.success("Marked as Reviewed")}><FileCheck2 className="mr-1 h-4 w-4" />Mark Reviewed</Button>
-            <Button onClick={() => toast.success("Published", { description: `${athlete.athleteName} — visible ke orang tua` })}>
+            <Button variant="outline" onClick={() => toast.success("Draft saved", { description: athlete.name })}>
+              <Save className="mr-1 h-4 w-4" />Save Draft
+            </Button>
+            <Button variant="outline" onClick={() => toast.success("Marked as Reviewed", { description: athlete.name })}>
+              <FileCheck2 className="mr-1 h-4 w-4" />Mark Reviewed
+            </Button>
+            <Button onClick={() => toast.success("Published", { description: `${athlete.name} — visible ke orang tua` })}>
               <Send className="mr-1 h-4 w-4" />Publish to Parent
             </Button>
           </div>
@@ -168,7 +198,7 @@ function NewAssessmentForm() {
             <RadarChart
               axes={[...SKILL_CATEGORIES]}
               series={[
-                { label: "Previous", color: "#94a3b8", values: SKILL_CATEGORIES.map((c) => athlete.previous[c]) },
+                { label: "Previous", color: "#94a3b8", values: SKILL_CATEGORIES.map((c) => previous[c] as number) },
                 { label: "Current", color: "hsl(var(--primary))", values: SKILL_CATEGORIES.map((c) => scores[c]) },
               ]}
             />

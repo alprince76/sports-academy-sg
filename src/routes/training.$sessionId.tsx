@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
-import { SESSIONS } from "./training.index";
+import { SESSIONS } from "@/lib/ops-data";
 import {
   SKILL_CATEGORIES, SKILL_SCALE, DEFAULT_SESSION_EVAL,
   type SessionSkillEvaluation, type SkillCategory,

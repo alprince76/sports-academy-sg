@@ -19,10 +19,10 @@ function ProgressPage() {
   const child = ATHLETES.find((a) => a.name === "Aldi Setiawan")!;
   const trend = [72, 78, 75, 82, 80, 86, child.progress];
   const skills = [
-    { name: "Passing", value: 85 },
     { name: "Shooting", value: 72 },
-    { name: "Speed", value: 88 },
-    { name: "Stamina", value: 90 },
+    { name: "Defense", value: 94 },
+    { name: "Athleticism", value: 90 },
+    { name: "Basketball IQ", value: 86 },
     { name: "Teamwork", value: 92 },
   ];
 

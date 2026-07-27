@@ -187,7 +187,7 @@ function OwnerDashboard({ userName }: { userName: string }) {
             <div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-primary" /><h2 className="font-display text-lg font-semibold">Top Teams</h2></div>
             <div className="mt-4 space-y-2">
               {[
-                { t: "U-14 A", w: 8, score: 92 }, { t: "U-12 A", w: 7, score: 88 }, { t: "U-14 B", w: 6, score: 85 },
+                { t: "Falcons Blue", w: 8, score: 92 }, { t: "Garuda Elite", w: 7, score: 88 }, { t: "Young Warriors", w: 6, score: 85 },
               ].map((t, i) => (
                 <div key={t.t} className="flex items-center gap-3 rounded-lg bg-card p-2.5 border border-border">
                   <span className="text-lg">{["🥇","🥈","🥉"][i]}</span>
@@ -237,9 +237,9 @@ function AdminDashboard({ userName }: { userName: string }) {
             </div>
             <div className="mt-5 space-y-3">
               {[
-                { time: "16:00", title: "Latihan U-12 A", coach: "Coach Bayu", attendees: 18 },
-                { time: "17:30", title: "Latihan U-14 B", coach: "Coach Andre", attendees: 16 },
-                { time: "18:00", title: "GK Specialist", coach: "Coach Dito", attendees: 6 },
+                { time: "16:00", title: "Ball Handling — Garuda Elite", coach: "Coach Bayu", attendees: 18 },
+                { time: "17:30", title: "Conditioning — Falcons Blue", coach: "Coach Andre", attendees: 16 },
+                { time: "18:00", title: "Shooting Form Lab", coach: "Coach Dito", attendees: 6 },
               ].map((u, i) => (
                 <div key={i} className="flex items-center gap-4 rounded-xl border border-border p-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft font-display text-sm font-bold text-primary">{u.time}</div>
@@ -260,8 +260,8 @@ function AdminDashboard({ userName }: { userName: string }) {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <BarChart title="Attendance Today" subtitle="Per tim" data={[
-          { label: "U-10", value: 86 }, { label: "U-12A", value: 94 }, { label: "U-12B", value: 78 },
-          { label: "U-14A", value: 91 }, { label: "U-14B", value: 88 },
+          { label: "YW", value: 86 }, { label: "GE", value: 94 }, { label: "PA", value: 78 },
+          { label: "FB", value: 91 }, { label: "All", value: 88 },
         ]} />
         <Card className="border-border/70">
           <CardContent className="p-6">
@@ -301,9 +301,9 @@ function CoachDashboard({ userName }: { userName: string }) {
             <h2 className="font-display text-lg font-semibold">Today's Sessions</h2>
             <div className="mt-4 space-y-3">
               {[
-                { id: "1", time: "16:00", title: "Latihan Teknik U-12 A", attendees: 18 },
-                { id: "4", time: "17:30", title: "Game Situational U-10", attendees: 14 },
-                { id: "5", time: "19:00", title: "GK Specific Training", attendees: 6 },
+                { id: "1", time: "16:00", title: "Ball Handling — Garuda Elite", attendees: 18 },
+                { id: "4", time: "17:30", title: "Game Situational — Young Warriors", attendees: 14 },
+                { id: "5", time: "19:00", title: "Shooting Form Lab", attendees: 6 },
               ].map((s) => (
                 <Link key={s.id} to="/training/$sessionId" params={{ sessionId: s.id }} className="flex items-center gap-4 rounded-xl border border-border p-3 transition hover:bg-secondary/50">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft font-display text-sm font-bold text-primary">{s.time}</div>
@@ -402,7 +402,7 @@ function ParentDashboard({ userName }: { userName: string }) {
             <div className="mt-4 space-y-3">
               {[
                 { d: "3 Jun", c: "Coach Rangga", n: child.note },
-                { d: "1 Jun", c: "Coach Rangga", n: "Komunikasi di lapangan semakin matang, terus pertahankan!" },
+                { d: "1 Jun", c: "Coach Rangga", n: "Help-side defense dan box-out semakin matang — terus pertahankan!" },
               ].map((f, i) => (
                 <div key={i} className="rounded-xl border border-border bg-secondary/30 p-3">
                   <div className="flex items-center justify-between"><p className="text-xs font-semibold text-primary">{f.c}</p><span className="text-xs text-muted-foreground">{f.d}</span></div>

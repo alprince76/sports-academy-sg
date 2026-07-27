@@ -7,46 +7,76 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Download, CreditCard, TrendingUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, CreditCard, TrendingUp, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { PAYMENTS, PAYMENT_PLANS, PARENT_CHILD_NAME, type Payment } from "@/lib/ops-data";
+import { ATHLETES, TEAMS } from "@/lib/demo-data";
+import { useRole } from "@/lib/role";
 
 export const Route = createFileRoute("/payments")({
   head: () => ({ meta: [{ title: "Payments — SportAcademy" }] }),
   component: PaymentsPage,
 });
 
-type Pay = { id: string; athlete: string; team: string; plan: string; amount: string; status: "Lunas" | "Tertunda" | "Overdue"; date: string };
-
-const PAYMENTS: Pay[] = [
-  { id: "INV-1001", athlete: "Rafi Pratama", team: "U-12 A", plan: "Bulanan", amount: "Rp 450.000", status: "Lunas", date: "1 Jun 2026" },
-  { id: "INV-1002", athlete: "Dimas Saputra", team: "U-12 A", plan: "Bulanan", amount: "Rp 450.000", status: "Lunas", date: "2 Jun 2026" },
-  { id: "INV-1003", athlete: "Aldi Setiawan", team: "U-14 B", plan: "Bulanan", amount: "Rp 500.000", status: "Tertunda", date: "5 Jun 2026" },
-  { id: "INV-1004", athlete: "Bagas Kurniawan", team: "U-10", plan: "Bulanan", amount: "Rp 400.000", status: "Lunas", date: "3 Jun 2026" },
-  { id: "INV-1005", athlete: "Reza Maulana", team: "U-14 A", plan: "Trimester", amount: "Rp 1.350.000", status: "Lunas", date: "1 Jun 2026" },
-  { id: "INV-1006", athlete: "Fajar Nugroho", team: "U-12 B", plan: "Bulanan", amount: "Rp 450.000", status: "Overdue", date: "25 Mei 2026" },
-  { id: "INV-1007", athlete: "Iqbal Hakim", team: "U-14 A", plan: "Bulanan", amount: "Rp 500.000", status: "Lunas", date: "2 Jun 2026" },
-  { id: "INV-1008", athlete: "Yoga Pratama", team: "U-10", plan: "Bulanan", amount: "Rp 400.000", status: "Tertunda", date: "6 Jun 2026" },
-];
-
 function PaymentsPage() {
+  const role = useRole();
+  const isParent = role === "parent";
   const [filter, setFilter] = useState("all");
-  const [open, setOpen] = useState<Pay | null>(null);
-  const filtered = PAYMENTS.filter((p) => filter === "all" || p.status === filter);
+  const [open, setOpen] = useState<Payment | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({
+    athlete: ATHLETES[0].name,
+    team: ATHLETES[0].team,
+    plan: "Bulanan",
+    amount: "450000",
+    due: "",
+  });
+
+  const source = isParent
+    ? PAYMENTS.filter((p) => p.athlete === PARENT_CHILD_NAME)
+    : PAYMENTS;
+  const filtered = source.filter((p) => filter === "all" || p.status === filter);
+
+  const submitInvoice = () => {
+    if (!form.amount.trim()) {
+      toast.error("Nominal wajib diisi");
+      return;
+    }
+    toast.success("Invoice dibuat", {
+      description: `${form.athlete} · ${form.plan} · Rp ${Number(form.amount).toLocaleString("id-ID")}`,
+    });
+    setCreateOpen(false);
+  };
 
   return (
     <DashboardLayout
       title="Pembayaran & Membership"
-      subtitle="Kelola tagihan dan keanggotaan akademi"
-      actions={<Button variant="outline"><Download className="mr-1 h-4 w-4" />Export</Button>}
+      subtitle={isParent ? `Tagihan membership ${PARENT_CHILD_NAME}` : "Kelola tagihan dan keanggotaan akademi basket"}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {!isParent && (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />Tambah Invoice
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => toast.success("Export CSV dimulai (demo)")}>
+            <Download className="mr-1 h-4 w-4" />Export
+          </Button>
+        </div>
+      }
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Revenue Bulan Ini" value="Rp 48.2jt" change="+18%" />
-        <StatCard label="Membership Aktif" value="112" change="+8" />
-        <StatCard label="Pembayaran Tertunda" value="9" change="-2" />
-        <StatCard label="Overdue" value="3" change="-1" tone="warn" />
-      </div>
+      {!isParent && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Revenue Bulan Ini" value="Rp 48.2jt" change="+18%" />
+          <StatCard label="Membership Aktif" value="112" change="+8" />
+          <StatCard label="Pembayaran Tertunda" value="9" change="-2" />
+          <StatCard label="Overdue" value="3" change="-1" tone="warn" />
+        </div>
+      )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className={`grid gap-6 lg:grid-cols-3 ${isParent ? "" : "mt-6"}`}>
         <Card className="border-border/70 lg:col-span-2">
           <CardContent className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -78,7 +108,11 @@ function PaymentsPage() {
                       <td className="px-4 py-3 font-mono text-xs">{p.id}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7"><AvatarFallback className="bg-primary-soft text-[10px] text-primary">{p.athlete.split(" ").map(x=>x[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="bg-primary-soft text-[10px] text-primary">
+                              {p.athlete.split(" ").map((x) => x[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
                             <p className="font-medium">{p.athlete}</p>
                             <p className="text-xs text-muted-foreground">{p.team} · {p.plan}</p>
@@ -87,11 +121,18 @@ function PaymentsPage() {
                       </td>
                       <td className="px-4 py-3 font-semibold">{p.amount}</td>
                       <td className="px-4 py-3">
-                        <Badge variant="secondary" className={
-                          p.status === "Lunas" ? "bg-primary-soft text-primary"
-                          : p.status === "Tertunda" ? "bg-warning/15 text-warning"
-                          : "bg-destructive/15 text-destructive"
-                        }>{p.status}</Badge>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            p.status === "Lunas"
+                              ? "bg-primary-soft text-primary"
+                              : p.status === "Tertunda"
+                                ? "bg-warning/15 text-warning"
+                                : "bg-destructive/15 text-destructive"
+                          }
+                        >
+                          {p.status}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Button variant="ghost" size="sm" onClick={() => setOpen(p)}>Detail</Button>
@@ -104,25 +145,27 @@ function PaymentsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/70">
-          <CardContent className="p-6">
-            <h2 className="font-display text-lg font-semibold">Revenue Trend</h2>
-            <p className="mt-1 text-xs text-muted-foreground">6 bulan terakhir</p>
-            <div className="mt-6 flex h-40 items-end gap-2">
-              {[28, 32, 38, 42, 40, 48].map((v, i) => (
-                <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="w-full rounded-t-md bg-gradient-to-t from-primary to-emerald-400" style={{ height: `${v * 1.6}%` }} />
-                  <span className="text-xs text-muted-foreground">{["Jan","Feb","Mar","Apr","Mei","Jun"][i]}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 rounded-xl bg-primary-soft/60 p-4">
-              <p className="text-xs text-muted-foreground">Pertumbuhan</p>
-              <p className="font-display text-2xl font-bold text-primary">+71%</p>
-              <p className="text-xs text-muted-foreground">vs Januari 2026</p>
-            </div>
-          </CardContent>
-        </Card>
+        {!isParent && (
+          <Card className="border-border/70">
+            <CardContent className="p-6">
+              <h2 className="font-display text-lg font-semibold">Revenue Trend</h2>
+              <p className="mt-1 text-xs text-muted-foreground">6 bulan terakhir</p>
+              <div className="mt-6 flex h-40 items-end gap-2">
+                {[28, 32, 38, 42, 40, 48].map((v, i) => (
+                  <div key={i} className="flex flex-1 flex-col items-center gap-2">
+                    <div className="w-full rounded-t-md bg-gradient-to-t from-primary to-emerald-400" style={{ height: `${v * 1.6}%` }} />
+                    <span className="text-xs text-muted-foreground">{["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 rounded-xl bg-primary-soft/60 p-4">
+                <p className="text-xs text-muted-foreground">Pertumbuhan</p>
+                <p className="font-display text-2xl font-bold text-primary">+71%</p>
+                <p className="text-xs text-muted-foreground">vs Januari 2026</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
@@ -142,10 +185,81 @@ function PaymentsPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(null)}>Tutup</Button>
-                <Button onClick={() => { toast.success("Tagihan diteruskan ke orang tua"); setOpen(null); }}>Kirim Reminder</Button>
+                {!isParent && (
+                  <Button onClick={() => { toast.success("Tagihan diteruskan ke orang tua"); setOpen(null); }}>
+                    Kirim Reminder
+                  </Button>
+                )}
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Tambah Invoice</DialogTitle></DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-2">
+              <Label>Atlet</Label>
+              <Select
+                value={form.athlete}
+                onValueChange={(v) => {
+                  const a = ATHLETES.find((x) => x.name === v);
+                  setForm({ ...form, athlete: v, team: a?.team ?? form.team });
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ATHLETES.map((a) => (
+                    <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Tim</Label>
+                <Select value={form.team} onValueChange={(v) => setForm({ ...form, team: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TEAMS.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Plan</Label>
+                <Select value={form.plan} onValueChange={(v) => setForm({ ...form, plan: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_PLANS.map((p) => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Nominal (Rp)</Label>
+                <Input
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Jatuh tempo</Label>
+                <Input type="date" value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Batal</Button>
+            <Button onClick={submitInvoice}>Buat Invoice</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

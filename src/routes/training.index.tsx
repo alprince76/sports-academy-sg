@@ -1,29 +1,62 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Clock, Users } from "lucide-react";
+import { toast } from "sonner";
+import { SESSIONS, SESSION_CATEGORIES, COACHES } from "@/lib/ops-data";
+import { TEAMS } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/training/")({
   head: () => ({ meta: [{ title: "Training — SportAcademy" }] }),
   component: TrainingPage,
 });
 
-export const SESSIONS = [
-  { id: "1", title: "Latihan Teknik Dasar U-12 A", coach: "Coach Bayu", team: "U-12 A", date: "Hari ini", time: "16:00 - 18:00", attendees: 18, category: "Technical" },
-  { id: "2", title: "Sesi Kondisi Fisik U-14 B", coach: "Coach Andre", team: "U-14 B", date: "Hari ini", time: "17:30 - 19:00", attendees: 16, category: "Physical" },
-  { id: "3", title: "Friendly Match vs SSB Pelita", coach: "All Teams", team: "U-12 / U-14", date: "Besok", time: "09:00 - 11:00", attendees: 32, category: "Match" },
-  { id: "4", title: "Game Situational U-10", coach: "Coach Rangga", team: "U-10", date: "Rabu", time: "16:00 - 17:30", attendees: 14, category: "Tactical" },
-  { id: "5", title: "Goalkeeper Specific Training", coach: "Coach Dito", team: "All GK", date: "Kamis", time: "15:30 - 17:00", attendees: 6, category: "Specialist" },
-];
-
 function TrainingPage() {
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    coach: COACHES[0].name,
+    team: TEAMS[0] as string,
+    date: "",
+    time: "16:00",
+    category: "Technical",
+  });
+
+  const submit = () => {
+    if (!form.title.trim()) {
+      toast.error("Judul sesi wajib diisi");
+      return;
+    }
+    toast.success("Sesi dibuat", {
+      description: `${form.title} · ${form.team} · ${form.coach}`,
+    });
+    setForm({
+      title: "",
+      coach: COACHES[0].name,
+      team: TEAMS[0],
+      date: "",
+      time: "16:00",
+      category: "Technical",
+    });
+    setCreateOpen(false);
+  };
+
   return (
     <DashboardLayout
       title="Training Sessions"
-      subtitle="Kelola sesi latihan, evaluasi, dan absensi"
-      actions={<Button><Plus className="mr-1 h-4 w-4" /> Buat Sesi</Button>}
+      subtitle="Kelola sesi latihan basket, evaluasi, dan absensi"
+      actions={
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Buat Sesi
+        </Button>
+      }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {SESSIONS.map((s) => (
@@ -46,6 +79,73 @@ function TrainingPage() {
           </Link>
         ))}
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Buat Sesi Latihan</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-2">
+              <Label>Judul *</Label>
+              <Input
+                placeholder="Mis. Ball Handling Focus — Garuda Elite"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Coach</Label>
+                <Select value={form.coach} onValueChange={(v) => setForm({ ...form, coach: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {COACHES.map((c) => (
+                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Tim</Label>
+                <Select value={form.team} onValueChange={(v) => setForm({ ...form, team: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TEAMS.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Tanggal</Label>
+                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Waktu mulai</Label>
+                <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Kategori</Label>
+              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SESSION_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Batal</Button>
+            <Button onClick={submit}>Buat Sesi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

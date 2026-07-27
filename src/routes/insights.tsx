@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, type SkillCategory } from "@/lib/assessment-data";
 import { ATHLETES, TEAMS, AGE_GROUPS } from "@/lib/demo-data";
-import { TrendingUp, TrendingDown, AlertTriangle, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, AlertTriangle, Sparkles, Download } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/insights")({
   head: () => ({ meta: [{ title: "Assessment Insights — SportAcademy" }] }),
@@ -66,7 +68,15 @@ function InsightsPage() {
   const insights = buildInsights({ time, team, ageGroup, skill, filtered, skillDistribution });
 
   return (
-    <DashboardLayout title="Assessment Insights" subtitle="Analitik perkembangan tim & atlet">
+    <DashboardLayout
+      title="Assessment Insights"
+      subtitle="Analitik perkembangan tim & atlet"
+      actions={
+        <Button variant="outline" onClick={() => toast.success("Insights exported (demo)")}>
+          <Download className="mr-1 h-4 w-4" />Export
+        </Button>
+      }
+    >
       <Card className="border-border/70">
         <CardContent className="flex flex-wrap items-center gap-3 p-4">
           <span className="text-xs font-semibold uppercase text-muted-foreground">Filter</span>

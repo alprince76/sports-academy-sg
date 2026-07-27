@@ -29,7 +29,7 @@ function ReportsPage() {
       subtitle="Insight performa, kehadiran, dan finansial akademi"
       actions={
         <>
-          <Button variant="outline"><Download className="mr-1 h-4 w-4" />Export CSV</Button>
+          <Button variant="outline" onClick={() => toast.success("Laporan CSV berhasil diunduh")}><Download className="mr-1 h-4 w-4" />Export CSV</Button>
           <Button onClick={handleExport} disabled={exporting}>
             <FileDown className="mr-1 h-4 w-4" />{exporting ? "Generating..." : "Download PDF"}
           </Button>
@@ -99,8 +99,8 @@ function ReportsPage() {
               <h2 className="font-display text-lg font-semibold">Attendance per Tim</h2>
               <div className="mt-5 space-y-4">
                 {[
-                  { t: "U-10", v: 88 }, { t: "U-12 A", v: 94 }, { t: "U-12 B", v: 81 },
-                  { t: "U-14 A", v: 93 }, { t: "U-14 B", v: 90 },
+                  { t: "Young Warriors", v: 88 }, { t: "Garuda Elite", v: 94 }, { t: "Phoenix Academy", v: 81 },
+                  { t: "Falcons Blue", v: 93 },
                 ].map((r) => (
                   <div key={r.t}>
                     <div className="mb-1 flex justify-between text-sm">

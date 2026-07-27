@@ -21,7 +21,7 @@ function ProgramsPage() {
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {TRAINING_PROGRAMS.map((p) => (
-          <Card key={p.id} className="border-border/70">
+          <Card key={p.id} className="border-border/70 transition hover:shadow-elevated">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <Badge variant="secondary" className="bg-primary-soft text-primary">{p.ageCategory}</Badge>
@@ -29,7 +29,9 @@ function ProgramsPage() {
                   {p.status}
                 </Badge>
               </div>
-              <h3 className="mt-3 font-display text-lg font-semibold leading-tight">{p.name}</h3>
+              <Link to="/programs/$programId" params={{ programId: p.id }} className="mt-3 block">
+                <h3 className="font-display text-lg font-semibold leading-tight hover:text-primary">{p.name}</h3>
+              </Link>
               <p className="mt-1 text-xs text-muted-foreground">{p.coach}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -64,9 +66,14 @@ function ProgramsPage() {
                 </ul>
               </div>
 
-              <Button asChild variant="secondary" size="sm" className="mt-4 w-full">
-                <Link to="/session-builder">Open Session Builder</Link>
-              </Button>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Button asChild variant="secondary" size="sm">
+                  <Link to="/programs/$programId" params={{ programId: p.id }}>Lihat Detail</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/session-builder">Session Builder</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

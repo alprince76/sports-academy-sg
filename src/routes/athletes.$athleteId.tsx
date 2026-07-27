@@ -34,7 +34,7 @@ function AthleteDetail() {
   const history = [
     { date: "3 Jun 2026", type: "Latihan", note: "Drill finishing — 5 gol dari 8 percobaan", score: 88 },
     { date: "1 Jun 2026", type: "Latihan", note: "Passing accuracy 84%", score: 84 },
-    { date: "29 Mei 2026", type: "Match", note: "vs SSB Pelita, assist 1", score: 86 },
+    { date: "29 Mei 2026", type: "Match", note: "vs Pelita Hoops, assist 1", score: 86 },
     { date: "27 Mei 2026", type: "Latihan", note: "Stamina drill, top tier", score: 90 },
   ];
 

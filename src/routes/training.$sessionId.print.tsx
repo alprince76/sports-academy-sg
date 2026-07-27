@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { ATHLETES } from "@/lib/demo-data";
-import { SESSIONS } from "./training.index";
+import { SESSIONS } from "@/lib/ops-data";
 import { SKILL_CATEGORIES } from "@/lib/assessment-data";
 
 export const Route = createFileRoute("/training/$sessionId/print")({

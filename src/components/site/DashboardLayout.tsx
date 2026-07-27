@@ -52,6 +52,8 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
+    { icon: ClipboardList, label: "Evaluations", to: "/evaluations" },
+    { icon: CalendarCheck, label: "Attendance", to: "/attendance" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
     { icon: ScanLine, label: "OCR Import", to: "/assessment/import" },
     { icon: Award, label: "Match Performance (PIR)", to: "/match-performance" },
@@ -171,7 +173,7 @@ export function DashboardLayout({
             </Sheet>
             <div className="hidden md:block">
               <p className="text-xs text-muted-foreground">Akademi</p>
-              <p className="text-sm font-semibold">SSB Garuda Muda</p>
+              <p className="text-sm font-semibold">Garuda Elite Academy</p>
             </div>
           </div>
           <div className="relative mx-auto hidden max-w-md flex-1 md:block">

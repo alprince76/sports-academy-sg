@@ -44,7 +44,7 @@ function DrillsPage() {
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((d) => (
-          <Card key={d.id} className="border-border/70">
+          <Card key={d.id} className="border-border/70 transition hover:shadow-elevated">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <Badge variant="secondary" className={BLOCK_META[d.category].color}>{d.category}</Badge>
@@ -60,7 +60,9 @@ function DrillsPage() {
                   </Button>
                 </div>
               </div>
-              <h3 className="mt-3 font-display text-base font-semibold leading-tight">{d.title}</h3>
+              <Link to="/drills/$drillId" params={{ drillId: d.id }} className="mt-3 block">
+                <h3 className="font-display text-base font-semibold leading-tight hover:text-primary">{d.title}</h3>
+              </Link>
               <p className="mt-1 text-xs text-muted-foreground">{d.objective}</p>
 
               <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
@@ -75,6 +77,10 @@ function DrillsPage() {
                   <span key={t} className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">#{t}</span>
                 ))}
               </div>
+
+              <Button asChild variant="secondary" size="sm" className="mt-4 w-full">
+                <Link to="/drills/$drillId" params={{ drillId: d.id }}>Lihat Detail</Link>
+              </Button>
             </CardContent>
           </Card>
         ))}

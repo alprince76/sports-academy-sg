@@ -26,7 +26,11 @@ function CreateDrillPage() {
   const set = (k: keyof typeof form, v: string) => setForm({ ...form, [k]: v });
 
   const save = () => {
-    toast.success("Drill baru tersimpan", { description: form.name || "Untitled" });
+    if (!form.name.trim()) {
+      toast.error("Drill Name wajib diisi");
+      return;
+    }
+    toast.success("Drill baru tersimpan", { description: form.name });
     setTimeout(() => navigate({ to: "/drills" }), 400);
   };
 

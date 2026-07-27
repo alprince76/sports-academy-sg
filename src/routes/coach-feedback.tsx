@@ -4,30 +4,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare } from "lucide-react";
+import { PARENT_FEEDBACK, PARENT_CHILD_NAME } from "@/lib/ops-data";
 
 export const Route = createFileRoute("/coach-feedback")({
   head: () => ({ meta: [{ title: "Coach Feedback — SportAcademy" }] }),
   component: CoachFeedbackPage,
 });
 
-const FEEDBACK = [
-  { d: "3 Jun 2026", c: "Coach Rangga", topic: "Evaluasi Latihan", n: "Aldi menunjukkan kepemimpinan yang luar biasa di lini belakang. Komunikasi dengan kiper dan gelandang terus meningkat. Pertahankan!", score: 91 },
-  { d: "1 Jun 2026", c: "Coach Rangga", topic: "Skill Update", n: "Heading dan positioning sangat baik. Mulai latihan tambahan untuk passing jarak jauh agar kemampuan distribusi bola lebih variatif.", score: 89 },
-  { d: "29 Mei 2026", c: "Coach Andre", topic: "Kondisi Fisik", n: "Stamina dalam kondisi prima. Sprint test masuk top 3 di tim. Pastikan istirahat dan nutrisi tetap terjaga.", score: 88 },
-  { d: "27 Mei 2026", c: "Coach Rangga", topic: "Match Report", n: "Tampil sebagai bek terbaik vs SSB Pelita. Clean sheet pertama musim ini berkat organisasi pertahanan yang dipimpin Aldi.", score: 92 },
-  { d: "25 Mei 2026", c: "Coach Rangga", topic: "Mental & Sikap", n: "Sikap profesional, datang tepat waktu, fokus saat latihan. Contoh baik untuk pemain lain.", score: 95 },
-];
-
 function CoachFeedbackPage() {
   return (
-    <DashboardLayout title="Coach Feedback" subtitle="Catatan & evaluasi pelatih untuk Aldi Setiawan">
+    <DashboardLayout title="Coach Feedback" subtitle={`Catatan & evaluasi pelatih basket untuk ${PARENT_CHILD_NAME}`}>
       <div className="space-y-4">
-        {FEEDBACK.map((f, i) => (
+        {PARENT_FEEDBACK.map((f, i) => (
           <Card key={i} className="border-border/70 transition hover:shadow-elevated">
             <CardContent className="p-6">
               <div className="flex flex-wrap items-start gap-4">
-                <Avatar className="h-11 w-11"><AvatarFallback className="bg-primary text-primary-foreground">{f.c.split(" ").map(p=>p[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
-                <div className="flex-1 min-w-0">
+                <Avatar className="h-11 w-11">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {f.c.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold">{f.c}</p>
                     <Badge variant="secondary" className="bg-primary-soft text-primary">{f.topic}</Badge>

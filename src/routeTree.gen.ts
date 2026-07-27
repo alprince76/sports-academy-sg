@@ -9,118 +9,40 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SessionBuilderRouteImport } from './routes/session-builder'
-import { Route as ScheduleRouteImport } from './routes/schedule'
-import { Route as RevenueRouteImport } from './routes/revenue'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as ProgressRouteImport } from './routes/progress'
-import { Route as ProgramsRouteImport } from './routes/programs'
-import { Route as PaymentsRouteImport } from './routes/payments'
-import { Route as MyAthletesRouteImport } from './routes/my-athletes'
-import { Route as MatchPerformanceRouteImport } from './routes/match-performance'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as InsightsRouteImport } from './routes/insights'
-import { Route as EvaluationsRouteImport } from './routes/evaluations'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CoachesRouteImport } from './routes/coaches'
-import { Route as CoachFeedbackRouteImport } from './routes/coach-feedback'
-import { Route as AttendanceRouteImport } from './routes/attendance'
-import { Route as AssessmentRouteImport } from './routes/assessment'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TrainingIndexRouteImport } from './routes/training.index'
-import { Route as DrillsIndexRouteImport } from './routes/drills.index'
-import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
-import { Route as TrainingSessionIdRouteImport } from './routes/training.$sessionId'
-import { Route as ProgramsNewRouteImport } from './routes/programs.new'
-import { Route as DrillsNewRouteImport } from './routes/drills.new'
-import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athleteId'
+import { Route as AssessmentRouteImport } from './routes/assessment'
+import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as CoachFeedbackRouteImport } from './routes/coach-feedback'
+import { Route as CoachesRouteImport } from './routes/coaches'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EvaluationsRouteImport } from './routes/evaluations'
+import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MatchPerformanceRouteImport } from './routes/match-performance'
+import { Route as MyAthletesRouteImport } from './routes/my-athletes'
+import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as ProgramsRouteImport } from './routes/programs'
+import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as RevenueRouteImport } from './routes/revenue'
+import { Route as ScheduleRouteImport } from './routes/schedule'
+import { Route as SessionBuilderRouteImport } from './routes/session-builder'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as AssessmentImportRouteImport } from './routes/assessment.import'
+import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
+import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athleteId'
+import { Route as DrillsIndexRouteImport } from './routes/drills.index'
+import { Route as DrillsDrillIdRouteImport } from './routes/drills.$drillId'
+import { Route as DrillsNewRouteImport } from './routes/drills.new'
+import { Route as ProgramsProgramIdRouteImport } from './routes/programs.$programId'
+import { Route as ProgramsNewRouteImport } from './routes/programs.new'
+import { Route as TrainingIndexRouteImport } from './routes/training.index'
+import { Route as TrainingSessionIdRouteImport } from './routes/training.$sessionId'
 import { Route as TrainingSessionIdPrintRouteImport } from './routes/training.$sessionId.print'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SessionBuilderRoute = SessionBuilderRouteImport.update({
-  id: '/session-builder',
-  path: '/session-builder',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScheduleRoute = ScheduleRouteImport.update({
-  id: '/schedule',
-  path: '/schedule',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RevenueRoute = RevenueRouteImport.update({
-  id: '/revenue',
-  path: '/revenue',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProgressRoute = ProgressRouteImport.update({
-  id: '/progress',
-  path: '/progress',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProgramsRoute = ProgramsRouteImport.update({
-  id: '/programs',
-  path: '/programs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaymentsRoute = PaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MyAthletesRoute = MyAthletesRouteImport.update({
-  id: '/my-athletes',
-  path: '/my-athletes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MatchPerformanceRoute = MatchPerformanceRouteImport.update({
-  id: '/match-performance',
-  path: '/match-performance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InsightsRoute = InsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EvaluationsRoute = EvaluationsRouteImport.update({
-  id: '/evaluations',
-  path: '/evaluations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CoachesRoute = CoachesRouteImport.update({
-  id: '/coaches',
-  path: '/coaches',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CoachFeedbackRoute = CoachFeedbackRouteImport.update({
-  id: '/coach-feedback',
-  path: '/coach-feedback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AttendanceRoute = AttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssessmentRoute = AssessmentRouteImport.update({
@@ -128,39 +50,99 @@ const AssessmentRoute = AssessmentRouteImport.update({
   path: '/assessment',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AttendanceRoute = AttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrainingIndexRoute = TrainingIndexRouteImport.update({
-  id: '/training/',
-  path: '/training/',
+const CoachFeedbackRoute = CoachFeedbackRouteImport.update({
+  id: '/coach-feedback',
+  path: '/coach-feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DrillsIndexRoute = DrillsIndexRouteImport.update({
-  id: '/drills/',
-  path: '/drills/',
+const CoachesRoute = CoachesRouteImport.update({
+  id: '/coaches',
+  path: '/coaches',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvaluationsRoute = EvaluationsRouteImport.update({
+  id: '/evaluations',
+  path: '/evaluations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchPerformanceRoute = MatchPerformanceRouteImport.update({
+  id: '/match-performance',
+  path: '/match-performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyAthletesRoute = MyAthletesRouteImport.update({
+  id: '/my-athletes',
+  path: '/my-athletes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgramsRoute = ProgramsRouteImport.update({
+  id: '/programs',
+  path: '/programs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RevenueRoute = RevenueRouteImport.update({
+  id: '/revenue',
+  path: '/revenue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScheduleRoute = ScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SessionBuilderRoute = SessionBuilderRouteImport.update({
+  id: '/session-builder',
+  path: '/session-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssessmentImportRoute = AssessmentImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AssessmentRoute,
 } as any)
 const AthletesIndexRoute = AthletesIndexRouteImport.update({
   id: '/athletes/',
   path: '/athletes/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrainingSessionIdRoute = TrainingSessionIdRouteImport.update({
-  id: '/training/$sessionId',
-  path: '/training/$sessionId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProgramsNewRoute = ProgramsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => ProgramsRoute,
-} as any)
-const DrillsNewRoute = DrillsNewRouteImport.update({
-  id: '/drills/new',
-  path: '/drills/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AthletesAthleteIdRoute = AthletesAthleteIdRouteImport.update({
@@ -168,10 +150,40 @@ const AthletesAthleteIdRoute = AthletesAthleteIdRouteImport.update({
   path: '/athletes/$athleteId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AssessmentImportRoute = AssessmentImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => AssessmentRoute,
+const DrillsIndexRoute = DrillsIndexRouteImport.update({
+  id: '/drills/',
+  path: '/drills/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DrillsDrillIdRoute = DrillsDrillIdRouteImport.update({
+  id: '/drills/$drillId',
+  path: '/drills/$drillId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DrillsNewRoute = DrillsNewRouteImport.update({
+  id: '/drills/new',
+  path: '/drills/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgramsProgramIdRoute = ProgramsProgramIdRouteImport.update({
+  id: '/$programId',
+  path: '/$programId',
+  getParentRoute: () => ProgramsRoute,
+} as any)
+const ProgramsNewRoute = ProgramsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => ProgramsRoute,
+} as any)
+const TrainingIndexRoute = TrainingIndexRouteImport.update({
+  id: '/training/',
+  path: '/training/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainingSessionIdRoute = TrainingSessionIdRouteImport.update({
+  id: '/training/$sessionId',
+  path: '/training/$sessionId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TrainingSessionIdPrintRoute = TrainingSessionIdPrintRouteImport.update({
   id: '/print',
@@ -201,7 +213,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/assessment/import': typeof AssessmentImportRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/drills/$drillId': typeof DrillsDrillIdRoute
   '/drills/new': typeof DrillsNewRoute
+  '/programs/$programId': typeof ProgramsProgramIdRoute
   '/programs/new': typeof ProgramsNewRoute
   '/training/$sessionId': typeof TrainingSessionIdRouteWithChildren
   '/athletes/': typeof AthletesIndexRoute
@@ -231,7 +245,9 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/assessment/import': typeof AssessmentImportRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/drills/$drillId': typeof DrillsDrillIdRoute
   '/drills/new': typeof DrillsNewRoute
+  '/programs/$programId': typeof ProgramsProgramIdRoute
   '/programs/new': typeof ProgramsNewRoute
   '/training/$sessionId': typeof TrainingSessionIdRouteWithChildren
   '/athletes': typeof AthletesIndexRoute
@@ -262,7 +278,9 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/assessment/import': typeof AssessmentImportRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
+  '/drills/$drillId': typeof DrillsDrillIdRoute
   '/drills/new': typeof DrillsNewRoute
+  '/programs/$programId': typeof ProgramsProgramIdRoute
   '/programs/new': typeof ProgramsNewRoute
   '/training/$sessionId': typeof TrainingSessionIdRouteWithChildren
   '/athletes/': typeof AthletesIndexRoute
@@ -294,7 +312,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/assessment/import'
     | '/athletes/$athleteId'
+    | '/drills/$drillId'
     | '/drills/new'
+    | '/programs/$programId'
     | '/programs/new'
     | '/training/$sessionId'
     | '/athletes/'
@@ -324,7 +344,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/assessment/import'
     | '/athletes/$athleteId'
+    | '/drills/$drillId'
     | '/drills/new'
+    | '/programs/$programId'
     | '/programs/new'
     | '/training/$sessionId'
     | '/athletes'
@@ -354,7 +376,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/assessment/import'
     | '/athletes/$athleteId'
+    | '/drills/$drillId'
     | '/drills/new'
+    | '/programs/$programId'
     | '/programs/new'
     | '/training/$sessionId'
     | '/athletes/'
@@ -384,6 +408,7 @@ export interface RootRouteChildren {
   SessionBuilderRoute: typeof SessionBuilderRoute
   SettingsRoute: typeof SettingsRoute
   AthletesAthleteIdRoute: typeof AthletesAthleteIdRoute
+  DrillsDrillIdRoute: typeof DrillsDrillIdRoute
   DrillsNewRoute: typeof DrillsNewRoute
   TrainingSessionIdRoute: typeof TrainingSessionIdRouteWithChildren
   AthletesIndexRoute: typeof AthletesIndexRoute
@@ -393,123 +418,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/session-builder': {
-      id: '/session-builder'
-      path: '/session-builder'
-      fullPath: '/session-builder'
-      preLoaderRoute: typeof SessionBuilderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/schedule': {
-      id: '/schedule'
-      path: '/schedule'
-      fullPath: '/schedule'
-      preLoaderRoute: typeof ScheduleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/revenue': {
-      id: '/revenue'
-      path: '/revenue'
-      fullPath: '/revenue'
-      preLoaderRoute: typeof RevenueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/progress': {
-      id: '/progress'
-      path: '/progress'
-      fullPath: '/progress'
-      preLoaderRoute: typeof ProgressRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/programs': {
-      id: '/programs'
-      path: '/programs'
-      fullPath: '/programs'
-      preLoaderRoute: typeof ProgramsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/payments': {
-      id: '/payments'
-      path: '/payments'
-      fullPath: '/payments'
-      preLoaderRoute: typeof PaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/my-athletes': {
-      id: '/my-athletes'
-      path: '/my-athletes'
-      fullPath: '/my-athletes'
-      preLoaderRoute: typeof MyAthletesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/match-performance': {
-      id: '/match-performance'
-      path: '/match-performance'
-      fullPath: '/match-performance'
-      preLoaderRoute: typeof MatchPerformanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/insights': {
-      id: '/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof InsightsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/evaluations': {
-      id: '/evaluations'
-      path: '/evaluations'
-      fullPath: '/evaluations'
-      preLoaderRoute: typeof EvaluationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/coaches': {
-      id: '/coaches'
-      path: '/coaches'
-      fullPath: '/coaches'
-      preLoaderRoute: typeof CoachesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/coach-feedback': {
-      id: '/coach-feedback'
-      path: '/coach-feedback'
-      fullPath: '/coach-feedback'
-      preLoaderRoute: typeof CoachFeedbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/attendance': {
-      id: '/attendance'
-      path: '/attendance'
-      fullPath: '/attendance'
-      preLoaderRoute: typeof AttendanceRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assessment': {
@@ -519,53 +432,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssessmentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/attendance': {
+      id: '/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof AttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/training/': {
-      id: '/training/'
-      path: '/training'
-      fullPath: '/training/'
-      preLoaderRoute: typeof TrainingIndexRouteImport
+    '/coach-feedback': {
+      id: '/coach-feedback'
+      path: '/coach-feedback'
+      fullPath: '/coach-feedback'
+      preLoaderRoute: typeof CoachFeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/drills/': {
-      id: '/drills/'
-      path: '/drills'
-      fullPath: '/drills/'
-      preLoaderRoute: typeof DrillsIndexRouteImport
+    '/coaches': {
+      id: '/coaches'
+      path: '/coaches'
+      fullPath: '/coaches'
+      preLoaderRoute: typeof CoachesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evaluations': {
+      id: '/evaluations'
+      path: '/evaluations'
+      fullPath: '/evaluations'
+      preLoaderRoute: typeof EvaluationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/match-performance': {
+      id: '/match-performance'
+      path: '/match-performance'
+      fullPath: '/match-performance'
+      preLoaderRoute: typeof MatchPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-athletes': {
+      id: '/my-athletes'
+      path: '/my-athletes'
+      fullPath: '/my-athletes'
+      preLoaderRoute: typeof MyAthletesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/programs': {
+      id: '/programs'
+      path: '/programs'
+      fullPath: '/programs'
+      preLoaderRoute: typeof ProgramsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/revenue': {
+      id: '/revenue'
+      path: '/revenue'
+      fullPath: '/revenue'
+      preLoaderRoute: typeof RevenueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule': {
+      id: '/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof ScheduleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/session-builder': {
+      id: '/session-builder'
+      path: '/session-builder'
+      fullPath: '/session-builder'
+      preLoaderRoute: typeof SessionBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assessment/import': {
+      id: '/assessment/import'
+      path: '/import'
+      fullPath: '/assessment/import'
+      preLoaderRoute: typeof AssessmentImportRouteImport
+      parentRoute: typeof AssessmentRoute
     }
     '/athletes/': {
       id: '/athletes/'
       path: '/athletes'
       fullPath: '/athletes/'
       preLoaderRoute: typeof AthletesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/training/$sessionId': {
-      id: '/training/$sessionId'
-      path: '/training/$sessionId'
-      fullPath: '/training/$sessionId'
-      preLoaderRoute: typeof TrainingSessionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/programs/new': {
-      id: '/programs/new'
-      path: '/new'
-      fullPath: '/programs/new'
-      preLoaderRoute: typeof ProgramsNewRouteImport
-      parentRoute: typeof ProgramsRoute
-    }
-    '/drills/new': {
-      id: '/drills/new'
-      path: '/drills/new'
-      fullPath: '/drills/new'
-      preLoaderRoute: typeof DrillsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/athletes/$athleteId': {
@@ -575,12 +572,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AthletesAthleteIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/assessment/import': {
-      id: '/assessment/import'
-      path: '/import'
-      fullPath: '/assessment/import'
-      preLoaderRoute: typeof AssessmentImportRouteImport
-      parentRoute: typeof AssessmentRoute
+    '/drills/': {
+      id: '/drills/'
+      path: '/drills'
+      fullPath: '/drills/'
+      preLoaderRoute: typeof DrillsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drills/$drillId': {
+      id: '/drills/$drillId'
+      path: '/drills/$drillId'
+      fullPath: '/drills/$drillId'
+      preLoaderRoute: typeof DrillsDrillIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drills/new': {
+      id: '/drills/new'
+      path: '/drills/new'
+      fullPath: '/drills/new'
+      preLoaderRoute: typeof DrillsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/programs/$programId': {
+      id: '/programs/$programId'
+      path: '/$programId'
+      fullPath: '/programs/$programId'
+      preLoaderRoute: typeof ProgramsProgramIdRouteImport
+      parentRoute: typeof ProgramsRoute
+    }
+    '/programs/new': {
+      id: '/programs/new'
+      path: '/new'
+      fullPath: '/programs/new'
+      preLoaderRoute: typeof ProgramsNewRouteImport
+      parentRoute: typeof ProgramsRoute
+    }
+    '/training/': {
+      id: '/training/'
+      path: '/training'
+      fullPath: '/training/'
+      preLoaderRoute: typeof TrainingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/training/$sessionId': {
+      id: '/training/$sessionId'
+      path: '/training/$sessionId'
+      fullPath: '/training/$sessionId'
+      preLoaderRoute: typeof TrainingSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/training/$sessionId/print': {
       id: '/training/$sessionId/print'
@@ -605,10 +644,12 @@ const AssessmentRouteWithChildren = AssessmentRoute._addFileChildren(
 )
 
 interface ProgramsRouteChildren {
+  ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
   ProgramsNewRoute: typeof ProgramsNewRoute
 }
 
 const ProgramsRouteChildren: ProgramsRouteChildren = {
+  ProgramsProgramIdRoute: ProgramsProgramIdRoute,
   ProgramsNewRoute: ProgramsNewRoute,
 }
 
@@ -648,6 +689,7 @@ const rootRouteChildren: RootRouteChildren = {
   SessionBuilderRoute: SessionBuilderRoute,
   SettingsRoute: SettingsRoute,
   AthletesAthleteIdRoute: AthletesAthleteIdRoute,
+  DrillsDrillIdRoute: DrillsDrillIdRoute,
   DrillsNewRoute: DrillsNewRoute,
   TrainingSessionIdRoute: TrainingSessionIdRouteWithChildren,
   AthletesIndexRoute: AthletesIndexRoute,
@@ -657,3 +699,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

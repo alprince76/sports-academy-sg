@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { ATHLETES, POSITIONS, TEAMS } from "@/lib/demo-data";
+import { AGE_GROUPS, ATHLETES, POSITIONS, TEAMS } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/athletes/")({
   head: () => ({ meta: [{ title: "Athletes — SportAcademy" }] }),
@@ -116,6 +116,36 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function AddAthleteDialog() {
   const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    age: "",
+    ageGroup: "KU-12",
+    position: POSITIONS[0],
+    team: TEAMS[0] as string,
+    parent: "",
+    phone: "",
+  });
+
+  const submit = () => {
+    if (!form.name.trim()) {
+      toast.error("Nama atlet wajib diisi");
+      return;
+    }
+    toast.success("Atlet berhasil ditambahkan", {
+      description: `${form.name} · ${form.team} · ${form.position}`,
+    });
+    setForm({
+      name: "",
+      age: "",
+      ageGroup: "KU-12",
+      position: POSITIONS[0],
+      team: TEAMS[0],
+      parent: "",
+      phone: "",
+    });
+    setOpen(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -124,27 +154,74 @@ function AddAthleteDialog() {
       <DialogContent>
         <DialogHeader><DialogTitle>Tambah Atlet Baru</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="grid gap-2"><Label>Nama Lengkap</Label><Input placeholder="Mis. Rafi Pratama" /></div>
+          <div className="grid gap-2">
+            <Label>Nama Lengkap *</Label>
+            <Input
+              placeholder="Mis. Rafi Pratama"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2"><Label>Umur</Label><Input type="number" placeholder="12" /></div>
+            <div className="grid gap-2">
+              <Label>Umur</Label>
+              <Input
+                type="number"
+                placeholder="12"
+                value={form.age}
+                onChange={(e) => setForm({ ...form, age: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Kelompok Usia</Label>
+              <Select value={form.ageGroup} onValueChange={(v) => setForm({ ...form, ageGroup: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {AGE_GROUPS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label>Posisi</Label>
-              <Select><SelectTrigger><SelectValue placeholder="Pilih posisi" /></SelectTrigger>
-                <SelectContent>{POSITIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              <Select value={form.position} onValueChange={(v) => setForm({ ...form, position: v as typeof POSITIONS[number] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {POSITIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Tim</Label>
+              <Select value={form.team} onValueChange={(v) => setForm({ ...form, team: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TEAMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid gap-2">
-            <Label>Tim</Label>
-            <Select><SelectTrigger><SelectValue placeholder="Pilih tim" /></SelectTrigger>
-              <SelectContent>{TEAMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
+            <Label>Nama Orang Tua</Label>
+            <Input
+              placeholder="Nama wali"
+              value={form.parent}
+              onChange={(e) => setForm({ ...form, parent: e.target.value })}
+            />
           </div>
-          <div className="grid gap-2"><Label>Nama Orang Tua</Label><Input placeholder="Nama wali" /></div>
+          <div className="grid gap-2">
+            <Label>Telepon Orang Tua</Label>
+            <Input
+              placeholder="+62 812-...."
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-          <Button onClick={() => { setOpen(false); toast.success("Atlet berhasil ditambahkan"); }}>Simpan Atlet</Button>
+          <Button onClick={submit}>Simpan Atlet</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

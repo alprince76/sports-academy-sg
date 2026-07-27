@@ -53,7 +53,7 @@ function Hero() {
           <div>
             <Badge variant="secondary" className="mb-5 gap-1.5 rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-primary">
               <Sparkles className="h-3 w-3" />
-              Platform #1 untuk SSB Modern
+              Platform #1 untuk Akademi Basket
             </Badge>
             <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
               Bangun calon juara
@@ -62,14 +62,14 @@ function Hero() {
               </span>
             </h1>
             <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-              SportAcademy membantu akademi olahraga mendigitalisasi pencatatan perkembangan atlet muda — transparan untuk orang tua, profesional untuk pelatih.
+              SportAcademy membantu akademi basket mendigitalisasi pencatatan perkembangan atlet muda — transparan untuk orang tua, profesional untuk pelatih.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" className="h-12 px-6 text-base shadow-[var(--shadow-elevated)]" asChild>
-                <Link to="/dashboard">Digitalisasi Akademi Anda</Link>
+                <Link to="/login">Digitalisasi Akademi Anda</Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-12 px-6 text-base">
-                Lihat Demo Live
+              <Button size="lg" variant="outline" className="h-12 px-6 text-base" asChild>
+                <Link to="/login">Lihat Demo Live</Link>
               </Button>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -83,7 +83,7 @@ function Hero() {
             <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-[var(--shadow-elevated)]">
               <img
                 src={heroImg}
-                alt="Anak-anak berlatih sepak bola di akademi"
+                alt="Anak-anak berlatih basket di akademi"
                 width={1536}
                 height={1024}
                 className="aspect-[4/3] w-full object-cover"
@@ -141,7 +141,7 @@ function SocialProof() {
 }
 
 const FEATURES = [
-  { icon: Activity, title: "Training Progress Tracking", desc: "Evaluasi per sesi: passing, dribbling, stamina, attitude. Visualisasi tren perkembangan." },
+  { icon: Activity, title: "Training Progress Tracking", desc: "Evaluasi per sesi: shooting, ball handling, defense, athleticism. Visualisasi tren perkembangan." },
   { icon: CalendarCheck, title: "Attendance & Schedule", desc: "Absensi cepat, jadwal latihan & pertandingan, notifikasi otomatis." },
   { icon: UsersRound, title: "Athlete Management", desc: "Profil atlet lengkap dengan medical notes, tim, posisi, dan info orang tua." },
   { icon: BarChart3, title: "Academy Analytics", desc: "Dashboard real-time: revenue, attendance rate, dan growth atlet." },
@@ -159,7 +159,7 @@ function Features() {
             Semua yang dibutuhkan akademi modern
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Satu platform untuk admin, pelatih, dan orang tua — dirancang untuk akademi olahraga anak.
+            Satu platform untuk admin, pelatih, dan orang tua — dirancang untuk akademi basket anak.
           </p>
         </div>
 
@@ -237,12 +237,12 @@ function Benefits() {
 
 function ProgressShowcase() {
   const skills = [
-    { name: "Passing", value: 86 },
-    { name: "Dribbling", value: 78 },
-    { name: "Shooting", value: 72 },
-    { name: "Stamina", value: 91 },
-    { name: "Teamwork", value: 88 },
-    { name: "Attitude", value: 95 },
+    { name: "Shooting", value: 86 },
+    { name: "Ball Handling", value: 78 },
+    { name: "Defense", value: 72 },
+    { name: "Athleticism", value: 91 },
+    { name: "Basketball IQ", value: 88 },
+    { name: "Teamwork", value: 95 },
   ];
   return (
     <section className="py-20 sm:py-24">
@@ -267,7 +267,7 @@ function ProgressShowcase() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Atlet</p>
-                <h3 className="font-display text-lg font-semibold">Rafi Pratama · U-12</h3>
+                <h3 className="font-display text-lg font-semibold">Rafi Pratama · KU-12</h3>
               </div>
               <Badge className="bg-primary-soft text-primary hover:bg-primary-soft">Great improvement</Badge>
             </div>
@@ -300,9 +300,9 @@ function ProgressShowcase() {
 
 function Testimonials() {
   const items = [
-    { name: "Bayu S.", role: "Head Coach, SSB Garuda", text: "Input evaluasi yang dulu makan 30 menit, sekarang 5 menit. Game changer." },
-    { name: "Ibu Sari", role: "Orang tua atlet U-10", text: "Akhirnya saya tahu perkembangan anak saya secara real. Tidak menebak-nebak lagi." },
-    { name: "Pak Adi", role: "Owner, Elite Football Academy", text: "Operasional akademi rapi, orang tua puas, retensi membership naik 40%." },
+    { name: "Bayu S.", role: "Head Coach, Garuda Elite", text: "Input evaluasi yang dulu makan 30 menit, sekarang 5 menit. Game changer." },
+    { name: "Ibu Sari", role: "Orang tua atlet KU-10", text: "Akhirnya saya tahu perkembangan anak saya secara real. Tidak menebak-nebak lagi." },
+    { name: "Pak Adi", role: "Owner, Elite Basketball Academy", text: "Operasional akademi rapi, orang tua puas, retensi membership naik 40%." },
   ];
   return (
     <section className="bg-secondary/40 py-20 sm:py-24">
@@ -405,14 +405,14 @@ function CTA() {
           <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 20% 20%, white, transparent 50%)" }} />
           <div className="relative">
             <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Digitalisasi Akademi Olahraga Anda
+              Digitalisasi Akademi Basket Anda
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-primary-foreground/90">
-              Bergabung dengan ratusan akademi yang sudah membangun calon juara dengan data.
+              Bergabung dengan ratusan akademi basket yang sudah membangun calon juara dengan data.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button size="lg" variant="secondary" className="h-12 px-6 text-base" asChild>
-                <Link to="/dashboard">Lihat Demo Live</Link>
+                <Link to="/login">Lihat Demo Live</Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 border-white/40 bg-transparent px-6 text-base text-primary-foreground hover:bg-white/10 hover:text-primary-foreground">
                 Book a Call

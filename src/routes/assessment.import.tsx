@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +36,7 @@ const seedExtract = (): Row[] =>
   }));
 
 function OcrImportPage() {
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [stage, setStage] = useState<"upload" | "processing" | "review" | "saved">("upload");
@@ -76,6 +77,7 @@ function OcrImportPage() {
 
   const publish = () => {
     toast.success("Published ke Parent Portal", { description: "Semua parent akan menerima notifikasi." });
+    navigate({ to: "/assessment" });
   };
 
   const reset = () => {
