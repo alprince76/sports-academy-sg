@@ -16,10 +16,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ReactNode } from "react";
-import { useRole, setRole, clearRole, ROLE_USERS, ROLE_LABEL, type Role } from "@/lib/role";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useRole, ROLE_LABEL, type Role } from "@/lib/role";
+import { apiData } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = { icon: typeof Home; label: string; to: string };
 
+/* Fallback: NAV_BY_ROLE statis (dipakai kalau /auth/menus belum tersedia) */
 const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   owner: [
     { icon: Home, label: "Dashboard", to: "/dashboard" },
@@ -68,8 +73,34 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   ],
 };
 
+/* Map icon string dari API -> komponen lucide */
+const ICON_MAP: Record<string, typeof Home> = {
+  Home, UsersRound, Megaphone, BookOpen, Wallet, ChartLine, Settings,
+  LayoutTemplate, Dumbbell, Activity, Target, ScanLine, Award, BarChart3,
+  CreditCard, CalendarCheck, TrendingUp, ClipboardList, MessageSquare,
+};
+
+interface MenuApiItem { label: string; icon: string; to: string; permission: string | null }
+
+/** Menu dinamis dari backend /auth/menus, fallback ke NAV_BY_ROLE. */
+function useDynamicMenus(role: Role): NavItem[] {
+  const { data } = useQuery({
+    queryKey: ["menus", role],
+    queryFn: () => apiData<{ role: Role; menus: MenuApiItem[] }>("/auth/menus"),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  if (data?.menus?.length) {
+    return data.menus
+      .filter((m) => m.icon in ICON_MAP)
+      .map((m) => ({ icon: ICON_MAP[m.icon] ?? Home, label: m.label, to: m.to }));
+  }
+  return NAV_BY_ROLE[role] ?? [];
+}
+
 function NavList({ pathname, role, onNav }: { pathname: string; role: Role; onNav?: () => void }) {
-  const items = NAV_BY_ROLE[role];
+  const items = useDynamicMenus(role);
   return (
     <nav className="flex flex-col gap-1 p-4">
       {items.map((n) => {
@@ -112,6 +143,25 @@ const ROLE_ICON: Record<Role, typeof Building2> = {
   parent: Heart,
 };
 
+/** Nama user dari backend /auth/me (fallback ke ROLE_USERS demo). */
+function useUserInfo(role: Role) {
+  const [name, setName] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("sportacademy.user");
+    if (stored) setName(stored);
+    apiData<{ profile?: { full_name?: string | null } }>("/auth/me")
+      .then((me) => {
+        if (me.profile?.full_name) {
+          setName(me.profile.full_name);
+          localStorage.setItem("sportacademy.user", me.profile.full_name);
+        }
+      })
+      .catch(() => { /* fallback demo */ });
+  }, [role]);
+  return name;
+}
+
 export function DashboardLayout({
   title,
   subtitle,
@@ -125,16 +175,17 @@ export function DashboardLayout({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const role = useRole();
-  const user = ROLE_USERS[role];
+  const fullName = useUserInfo(role);
   const navigate = useNavigate();
-
-  const handleSwitch = (r: Role) => {
-    setRole(r);
-    navigate({ to: "/dashboard" });
-  };
+  const fallbackName = fullName ?? "Demo User";
+  const initials = fallbackName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "DU";
 
   const handleLogout = () => {
-    clearRole();
+    // SignOut dari Supabase + hapus state lokal
+    void supabase.auth.signOut();
+    localStorage.removeItem("sportacademy.role");
+    localStorage.removeItem("sportacademy.academy");
+    localStorage.removeItem("sportacademy.user");
     navigate({ to: "/login" });
   };
 
@@ -150,7 +201,7 @@ export function DashboardLayout({
         <NavList pathname={pathname} role={role} />
         <div className="mt-auto p-4">
           <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-sidebar-accent/50">
-            <LogOut className="h-4 w-4" /> Keluar Demo
+            <LogOut className="h-4 w-4" /> Keluar
           </button>
         </div>
       </aside>
@@ -180,7 +231,7 @@ export function DashboardLayout({
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <Badge variant="secondary" className="hidden gap-1 bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200 sm:inline-flex">
-              <Sparkles className="h-3 w-3" /> Demo Mode Active
+              <Sparkles className="h-3 w-3" /> Dev Branch
             </Badge>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
@@ -190,10 +241,10 @@ export function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition hover:bg-secondary">
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary text-primary-foreground">{user.initials}</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="hidden text-left sm:block">
-                    <p className="text-xs font-semibold leading-tight">{user.name}</p>
+                    <p className="text-xs font-semibold leading-tight">{fallbackName}</p>
                     <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[role]}</p>
                   </div>
                 </button>
@@ -201,33 +252,17 @@ export function DashboardLayout({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
-                    <span>{user.name}</span>
-                    <span className="text-xs font-normal text-muted-foreground">{user.title}</span>
+                    <span>{fallbackName}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{ROLE_LABEL[role]}</span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Sparkles className="mr-2 h-4 w-4" /> Switch Role
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {(Object.keys(ROLE_USERS) as Role[]).map((r) => {
-                      const Icon = ROLE_ICON[r];
-                      return (
-                        <DropdownMenuItem key={r} onClick={() => handleSwitch(r)}>
-                          <Icon className="mr-2 h-4 w-4" /> {ROLE_LABEL[r]}
-                          {r === role && <Badge variant="secondary" className="ml-auto bg-primary-soft text-[10px] text-primary">Current</Badge>}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
                 <DropdownMenuItem asChild>
                   <Link to="/settings"><Settings className="mr-2 h-4 w-4" /> Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" /> Exit Demo
+                  <LogOut className="mr-2 h-4 w-4" /> Keluar
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

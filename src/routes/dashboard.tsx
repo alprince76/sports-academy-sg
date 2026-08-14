@@ -11,6 +11,7 @@ import {
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { useRole, ROLE_USERS } from "@/lib/role";
 import { ATHLETES, getInjurySummary, healthStatusColor, HEALTH_STATUSES } from "@/lib/demo-data";
+import { useAthletes, useDashboardSummary, type DashboardSummary } from "@/lib/queries";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
@@ -18,14 +19,40 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
+/* Backend athlete → shape demo-data FE (fallback aman kalau backend kosong) */
+function toFeAthletes(items: { name: string; age_group?: string | null; position?: string | null; team?: string | null; progress?: number; attendance?: number; status?: string; note?: string | null }[]) {
+  return items.map((a, i) => {
+    const ageMatch = (a.age_group ?? "").match(/(\d+)/);
+    return {
+      id: `be-${i}`,
+      name: a.name,
+      age: ageMatch ? Number(ageMatch[1]) : 12,
+      position: a.position ?? "Forward",
+      team: a.team ?? "U-12 A",
+      progress: a.progress ?? 0,
+      attendance: a.attendance ?? 0,
+      status: (a.status === "Great" ? "Great" : a.status === "Needs Focus" ? "Needs Focus" : "Good") as typeof ATHLETES[number]["status"],
+      note: a.note ?? "Sedang berkembang pesat.",
+      avatar: { initials: a.name.split(" ").map((p) => p[0]).join("").slice(0, 2), color: "primary" },
+      skills: [],
+      achievements: [],
+      health: { status: "Healthy", updatedAt: "Terbaru" },
+    } as unknown as typeof ATHLETES[number];
+  });
+}
+
 function Dashboard() {
   const role = useRole();
   const user = ROLE_USERS[role];
+  const { data: backendAthletes } = useAthletes();
+  const { data: summary } = useDashboardSummary();
 
-  if (role === "owner") return <OwnerDashboard userName={user.name} />;
-  if (role === "coach") return <CoachDashboard userName={user.name} />;
-  if (role === "parent") return <ParentDashboard userName={user.name} />;
-  return <AdminDashboard userName={user.name} />;
+  const athletes = backendAthletes?.length ? toFeAthletes(backendAthletes) : ATHLETES;
+
+  if (role === "owner") return <OwnerDashboard userName={user.name} athletes={athletes} summary={summary} />;
+  if (role === "coach") return <CoachDashboard userName={user.name} athletes={athletes} />;
+  if (role === "parent") return <ParentDashboard userName={user.name} athletes={athletes} />;
+  return <AdminDashboard userName={user.name} athletes={athletes} />;
 }
 
 /* ---------- Shared bits ---------- */
@@ -170,7 +197,7 @@ function InjurySummary({ athleteFilter }: { athleteFilter?: (a: typeof ATHLETES[
 
 
 /* ---------- OWNER ---------- */
-function OwnerDashboard({ userName }: { userName: string }) {
+function OwnerDashboard({ userName, athletes = ATHLETES, summary }: { userName: string; athletes?: typeof ATHLETES; summary?: DashboardSummary }) {
   return (
     <DashboardLayout title={`Selamat datang, ${userName} 👋`} subtitle="Ringkasan bisnis akademi Anda.">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -218,7 +245,7 @@ function OwnerDashboard({ userName }: { userName: string }) {
 }
 
 /* ---------- ADMIN ---------- */
-function AdminDashboard({ userName }: { userName: string }) {
+function AdminDashboard({ userName, athletes = ATHLETES }: { userName: string; athletes?: typeof ATHLETES }) {
   return (
     <DashboardLayout title={`Hi, ${userName} 👋`} subtitle="Operasional akademi hari ini." actions={<Button asChild><Link to="/athletes"><Plus className="mr-1 h-4 w-4" />Add Athlete</Link></Button>}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -267,7 +294,7 @@ function AdminDashboard({ userName }: { userName: string }) {
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">Atlet Aktif</h2>
             <div className="mt-4 space-y-3">
-              {ATHLETES.slice(0, 4).map((a) => (
+              {athletes.slice(0, 4).map((a) => (
                 <Link key={a.id} to="/athletes/$athleteId" params={{ athleteId: a.id }} className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-secondary/50">
                   <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary-soft text-xs text-primary">{a.name.split(" ").map(p=>p[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
                   <div className="flex-1"><p className="text-sm font-medium">{a.name}</p><p className="text-xs text-muted-foreground">{a.team} · {a.position}</p></div>
@@ -285,7 +312,7 @@ function AdminDashboard({ userName }: { userName: string }) {
 }
 
 /* ---------- COACH ---------- */
-function CoachDashboard({ userName }: { userName: string }) {
+function CoachDashboard({ userName, athletes = ATHLETES }: { userName: string; athletes?: typeof ATHLETES }) {
   return (
     <DashboardLayout title={`Halo, ${userName} 👋`} subtitle="Aktivitas lapangan & evaluasi hari ini.">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -330,7 +357,7 @@ function CoachDashboard({ userName }: { userName: string }) {
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">My Athletes</h2>
             <div className="mt-4 space-y-3">
-              {ATHLETES.slice(0, 4).map((a) => (
+              {athletes.slice(0, 4).map((a) => (
                 <Link key={a.id} to="/athletes/$athleteId" params={{ athleteId: a.id }} className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-secondary/50">
                   <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary-soft text-xs text-primary">{a.name.split(" ").map(p=>p[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
                   <div className="flex-1"><p className="text-sm font-medium">{a.name}</p><p className="text-xs text-muted-foreground">{a.team} · {a.position}</p></div>
@@ -348,8 +375,8 @@ function CoachDashboard({ userName }: { userName: string }) {
 }
 
 /* ---------- PARENT ---------- */
-function ParentDashboard({ userName }: { userName: string }) {
-  const child = ATHLETES.find((a) => a.name === "Aldi Setiawan")!;
+function ParentDashboard({ userName, athletes = ATHLETES }: { userName: string; athletes?: typeof ATHLETES }) {
+  const child = athletes.find((a) => a.name === "Aldi Setiawan") ?? athletes[0] ?? ATHLETES[0];
   return (
     <DashboardLayout title={`Hi ${userName} 👋`} subtitle={`Perkembangan ${child.name} (${child.team}, ${child.position})`}>
       <Card className="mb-6 overflow-hidden border-border/70 bg-gradient-to-br from-primary-soft/60 via-card to-card">

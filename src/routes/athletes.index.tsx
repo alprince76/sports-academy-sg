@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { ATHLETES, POSITIONS, TEAMS } from "@/lib/demo-data";
+import { useAthletes, useCreateAthlete } from "@/lib/queries";
+import { TEAMS, POSITIONS } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/athletes/")({
   head: () => ({ meta: [{ title: "Athletes — SportAcademy" }] }),
@@ -23,16 +24,23 @@ function AthletesPage() {
   const [team, setTeam] = useState<string>("all");
   const [pos, setPos] = useState<string>("all");
 
-  const filtered = useMemo(() => ATHLETES.filter((a) =>
+  const { data: athletes = [], isLoading, isError } = useAthletes();
+
+  const filtered = useMemo(() => athletes.filter((a) =>
     (team === "all" || a.team === team) &&
     (pos === "all" || a.position === pos) &&
     a.name.toLowerCase().includes(q.toLowerCase())
-  ), [q, team, pos]);
+  ), [athletes, q, team, pos]);
+
+  const ageOf = (a: { age_group: string | null }) => {
+    const m = a.age_group?.match(/(\d+)/);
+    return m ? `${m[1]}thn` : "—";
+  };
 
   return (
     <DashboardLayout
       title="Manajemen Atlet"
-      subtitle={`${ATHLETES.length} atlet terdaftar di akademi`}
+      subtitle={`${athletes.length} atlet terdaftar di akademi`}
       actions={<AddAthleteDialog />}
     >
       <Card className="border-border/70">
@@ -58,6 +66,15 @@ function AthletesPage() {
         </CardContent>
       </Card>
 
+      {isLoading && (
+        <Card className="mt-6"><CardContent className="p-12 text-center text-sm text-muted-foreground">Memuat data atlet...</CardContent></Card>
+      )}
+      {isError && (
+        <Card className="mt-6 border-dashed"><CardContent className="p-12 text-center text-sm text-muted-foreground">
+          Gagal memuat data dari backend. Pastikan backend :8081 jalan.
+        </CardContent></Card>
+      )}
+
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.map((a) => (
           <Link key={a.id} to="/athletes/$athleteId" params={{ athleteId: a.id }}>
@@ -71,9 +88,9 @@ function AthletesPage() {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{a.name}</p>
-                    <p className="text-xs text-muted-foreground">{a.age}thn · {a.position}</p>
+                    <p className="text-xs text-muted-foreground">{ageOf(a)} · {a.position ?? "—"}</p>
                   </div>
-                  <Badge variant="secondary" className="bg-primary-soft text-primary">{a.team}</Badge>
+                  <Badge variant="secondary" className="bg-primary-soft text-primary">{a.team ?? "—"}</Badge>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <Metric label="Performance" value={`${a.progress}`} />
@@ -88,12 +105,12 @@ function AthletesPage() {
                     <div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400" style={{ width: `${a.progress}%` }} />
                   </div>
                 </div>
-                <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">"{a.note}"</p>
+                {a.note && <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">"{a.note}"</p>}
               </CardContent>
             </Card>
           </Link>
         ))}
-        {filtered.length === 0 && (
+        {filtered.length === 0 && !isLoading && !isError && (
           <Card className="col-span-full border-dashed">
             <CardContent className="p-12 text-center text-sm text-muted-foreground">
               Tidak ada atlet yang cocok dengan filter.
@@ -116,6 +133,19 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function AddAthleteDialog() {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
+  const [team, setTeam] = useState("");
+  const create = useCreateAthlete();
+
+  const submit = () => {
+    if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
+    create.mutate({ name: name.trim(), position: position || null, team: team || null }, {
+      onSuccess: () => { toast.success("Atlet berhasil ditambahkan"); setOpen(false); setName(""); setPosition(""); setTeam(""); },
+      onError: (e: any) => toast.error(e?.message ?? "Gagal menambah atlet"),
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -124,27 +154,27 @@ function AddAthleteDialog() {
       <DialogContent>
         <DialogHeader><DialogTitle>Tambah Atlet Baru</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="grid gap-2"><Label>Nama Lengkap</Label><Input placeholder="Mis. Rafi Pratama" /></div>
+          <div className="grid gap-2"><Label>Nama Lengkap</Label><Input placeholder="Mis. Rafi Pratama" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2"><Label>Umur</Label><Input type="number" placeholder="12" /></div>
             <div className="grid gap-2">
               <Label>Posisi</Label>
-              <Select><SelectTrigger><SelectValue placeholder="Pilih posisi" /></SelectTrigger>
+              <Select value={position} onValueChange={setPosition}>
+                <SelectTrigger><SelectValue placeholder="Pilih posisi" /></SelectTrigger>
                 <SelectContent>{POSITIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            <div className="grid gap-2">
+              <Label>Tim</Label>
+              <Select value={team} onValueChange={setTeam}>
+                <SelectTrigger><SelectValue placeholder="Pilih tim" /></SelectTrigger>
+                <SelectContent>{TEAMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="grid gap-2">
-            <Label>Tim</Label>
-            <Select><SelectTrigger><SelectValue placeholder="Pilih tim" /></SelectTrigger>
-              <SelectContent>{TEAMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2"><Label>Nama Orang Tua</Label><Input placeholder="Nama wali" /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-          <Button onClick={() => { setOpen(false); toast.success("Atlet berhasil ditambahkan"); }}>Simpan Atlet</Button>
+          <Button onClick={submit} disabled={create.isPending}>{create.isPending ? "Menyimpan..." : "Simpan Atlet"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
