@@ -72,6 +72,10 @@ export function useAuth() {
     localStorage.removeItem(ROLE_KEY);
     localStorage.removeItem(ACADEMY_KEY);
     localStorage.removeItem(USER_KEY);
+    // hapus cache menu semua role
+    for (const r of ["owner", "admin", "coach", "parent"]) {
+      localStorage.removeItem(`sportacademy.menus.${r}`);
+    }
   }, []);
 
   return { session, loading, me, signIn, signOut, refreshMe };

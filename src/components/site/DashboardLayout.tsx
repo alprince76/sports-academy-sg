@@ -82,41 +82,91 @@ const ICON_MAP: Record<string, typeof Home> = {
 
 interface MenuApiItem { label: string; icon: string; to: string; permission: string | null }
 
-/** Menu dinamis dari backend /auth/menus, fallback ke NAV_BY_ROLE. */
+const MENUS_CACHE_KEY = (role: Role) => `sportacademy.menus.${role}`;
+
+function toNavItems(menus: MenuApiItem[]): NavItem[] {
+  return menus
+    .filter((m) => m.icon in ICON_MAP)
+    .map((m) => ({ icon: ICON_MAP[m.icon] ?? Home, label: m.label, to: m.to }));
+}
+
+/**
+ * Menu dinamis dari backend /auth/menus dengan cache localStorage.
+ * Render langsung dari cache saat load (anti-blink), fetch async lalu update cache.
+ * Fallback NAV_BY_ROLE hanya dipakai kalau belum ada cache & fetch gagal.
+ */
 function useDynamicMenus(role: Role): NavItem[] {
-  const { data } = useQuery({
+  const [cached, setCached] = useState<MenuApiItem[] | null>(null);
+
+  // Baca cache segera (client-side only)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(MENUS_CACHE_KEY(role));
+      if (raw) setCached(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, [role]);
+
+  const { data, isError } = useQuery({
     queryKey: ["menus", role],
-    queryFn: () => apiData<{ role: Role; menus: MenuApiItem[] }>("/auth/menus"),
+    queryFn: async () => {
+      const result = await apiData<{ role: Role; menus: MenuApiItem[] }>("/auth/menus");
+      if (typeof window !== "undefined" && result?.menus?.length) {
+        localStorage.setItem(MENUS_CACHE_KEY(role), JSON.stringify(result.menus));
+      }
+      return result;
+    },
     staleTime: 60_000,
     retry: 1,
   });
 
-  if (data?.menus?.length) {
-    return data.menus
-      .filter((m) => m.icon in ICON_MAP)
-      .map((m) => ({ icon: ICON_MAP[m.icon] ?? Home, label: m.label, to: m.to }));
-  }
-  return NAV_BY_ROLE[role] ?? [];
+  // 1) data segar dari fetch
+  if (data?.menus?.length) return toNavItems(data.menus);
+  // 2) cache lokal (render instan, identik dengan data asli — tidak blink)
+  if (cached?.length) return toNavItems(cached);
+  // 3) terakhir: fallback statis (hanya kalau fetch gagal & belum ada cache)
+  if (isError) return NAV_BY_ROLE[role] ?? [];
+  // 4) masih loading & belum ada cache: tampilkan kosong (hindari flash menu salah)
+  return [];
 }
 
 function NavList({ pathname, role, onNav }: { pathname: string; role: Role; onNav?: () => void }) {
   const items = useDynamicMenus(role);
+  // Normalisasi: hilangkan trailing slash supaya "/athletes/" === "/athletes"
+  const current = pathname.replace(/\/+$/, "");
+
+  const isActive = (to: string) => {
+    const target = to.replace(/\/+$/, "");
+    if (target === "/dashboard") return current === "/dashboard";
+    // match persis atau prefix segmen (bukan substring): /assessment match /assessment/import,
+    // TAPI /assessment TIDAK match /assessment-other
+    return current === target || current.startsWith(`${target}/`);
+  };
+
   return (
     <nav className="flex flex-col gap-1 p-4">
       {items.map((n) => {
-        const active = pathname === n.to || (n.to !== "/dashboard" && pathname.startsWith(n.to));
+        const active = isActive(n.to);
         return (
           <Link
             key={n.to}
             to={n.to}
             onClick={onNav}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+            aria-current={active ? "page" : undefined}
+            className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
               active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
             }`}
           >
-            <n.icon className="h-4 w-4" />
+            {/* indikator aktif — bar kiri */}
+            <span
+              aria-hidden
+              className={`absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-r-full bg-primary transition-opacity ${
+                active ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            <n.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
             {n.label}
           </Link>
         );
@@ -181,11 +231,14 @@ export function DashboardLayout({
   const initials = fallbackName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "DU";
 
   const handleLogout = () => {
-    // SignOut dari Supabase + hapus state lokal
+    // SignOut dari Supabase + hapus state & cache menu lokal
     void supabase.auth.signOut();
     localStorage.removeItem("sportacademy.role");
     localStorage.removeItem("sportacademy.academy");
     localStorage.removeItem("sportacademy.user");
+    for (const r of ["owner", "admin", "coach", "parent"] as Role[]) {
+      localStorage.removeItem(MENUS_CACHE_KEY(r));
+    }
     navigate({ to: "/login" });
   };
 

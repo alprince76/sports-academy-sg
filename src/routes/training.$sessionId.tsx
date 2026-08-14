@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
-import { SESSIONS } from "./training.index";
+import { useSessionList } from "./training.index";
 import {
   SKILL_CATEGORIES, SKILL_SCALE, DEFAULT_SESSION_EVAL,
   type SessionSkillEvaluation, type SkillCategory,
@@ -25,7 +25,8 @@ export const Route = createFileRoute("/training/$sessionId")({
 
 function SessionPage() {
   const { sessionId } = Route.useParams();
-  const session = SESSIONS.find((s) => s.id === sessionId) ?? SESSIONS[0];
+  const { data: sessions = [] } = useSessionList();
+  const session = sessions.find((s) => s.id === sessionId) ?? sessions[0];
   const roster = ATHLETES.slice(0, 6);
 
   const [present, setPresent] = useState<Record<string, boolean>>(
@@ -50,8 +51,8 @@ function SessionPage() {
 
   return (
     <DashboardLayout
-      title={session.title}
-      subtitle={`${session.coach} · ${session.team} · ${session.date}, ${session.time}`}
+      title={session?.title ?? "Sesi Latihan"}
+      subtitle={`${session?.programs?.title ?? "Program"} · ${session?.focus ?? "—"} · ${session?.session_date ?? ""}`}
       actions={
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline"><Link to="/training"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>

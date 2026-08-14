@@ -3,8 +3,8 @@ import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MATCH_STATS, calcPIR } from "@/lib/assessment-data";
 import { Trophy } from "lucide-react";
+import { useAthletes, useMatchStats } from "@/lib/queries";
 
 export const Route = createFileRoute("/match-performance")({
   head: () => ({ meta: [{ title: "Match Performance (PIR) — SportAcademy" }] }),
@@ -12,10 +12,15 @@ export const Route = createFileRoute("/match-performance")({
 });
 
 function MatchPerformancePage() {
+  const { data: athletes = [] } = useAthletes();
+  // Tampilkan stats untuk atlet pertama yang punya data (atau semua atlet — backend per-athlete)
+  const athlete = athletes.find((a) => a.name === "Aldi Setiawan") ?? athletes[0];
+  const { data: stats = [], isLoading, isError } = useMatchStats(athlete?.id ?? "");
+
   return (
     <DashboardLayout
       title="Match Performance (PIR)"
-      subtitle="Statistik pertandingan resmi + Performance Index Rating (FIBA)."
+      subtitle={`Statistik pertandingan resmi + Performance Index Rating (FIBA) — ${athlete?.name ?? "—"}`}
     >
       <Card className="border-border/70">
         <CardContent className="p-6">
@@ -29,13 +34,22 @@ function MatchPerformancePage() {
                 </p>
               </div>
             </div>
-            <Badge variant="secondary" className="bg-accent text-accent-foreground">KU-12 ke atas · terpisah dari Session Evaluation</Badge>
+            <Badge variant="secondary" className="bg-accent text-accent-foreground">PIR dihitung di backend</Badge>
           </div>
+
+          {isLoading && (
+            <p className="mt-6 text-center text-sm text-muted-foreground">Memuat statistik...</p>
+          )}
+          {isError && (
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Gagal memuat data dari backend. Pastikan backend :8081 jalan.
+            </p>
+          )}
+
           <div className="mt-4 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Atlet</TableHead>
                   <TableHead>Opponent</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>MIN</TableHead>
@@ -45,16 +59,15 @@ function MatchPerformancePage() {
                   <TableHead>STL</TableHead>
                   <TableHead>BLK</TableHead>
                   <TableHead>TO</TableHead>
-                  <TableHead>+/−</TableHead>
+                  <TableHead>FG</TableHead>
                   <TableHead className="text-right">PIR</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MATCH_STATS.map((s) => (
+                {stats.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.athleteName}</TableCell>
-                    <TableCell className="text-muted-foreground">{s.opponent}</TableCell>
-                    <TableCell className="text-muted-foreground">{s.date}</TableCell>
+                    <TableCell className="font-medium">{s.opponent ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{s.match_date}</TableCell>
                     <TableCell>{s.min}</TableCell>
                     <TableCell>{s.pts}</TableCell>
                     <TableCell>{s.reb}</TableCell>
@@ -62,10 +75,17 @@ function MatchPerformancePage() {
                     <TableCell>{s.stl}</TableCell>
                     <TableCell>{s.blk}</TableCell>
                     <TableCell>{s.to}</TableCell>
-                    <TableCell className={s.pm >= 0 ? "text-primary" : "text-destructive"}>{s.pm > 0 ? `+${s.pm}` : s.pm}</TableCell>
-                    <TableCell className="text-right font-display font-bold text-primary">{calcPIR(s)}</TableCell>
+                    <TableCell className="text-muted-foreground">{s.fgm}/{s.fga}</TableCell>
+                    <TableCell className="text-right font-display font-bold text-primary">{s.pir}</TableCell>
                   </TableRow>
                 ))}
+                {stats.length === 0 && !isLoading && !isError && (
+                  <TableRow>
+                    <TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
+                      Belum ada data pertandingan untuk {athlete?.name ?? "atlet"}.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ATHLETES } from "@/lib/demo-data";
+import { useAthletes, useAttendance } from "@/lib/queries";
 import { useRole } from "@/lib/role";
 
 export const Route = createFileRoute("/attendance")({
@@ -17,37 +17,37 @@ export const Route = createFileRoute("/attendance")({
 
 function AttendancePage() {
   const role = useRole();
-  const isCoach = role === "coach";
   const isParent = role === "parent";
 
-  const roster = ATHLETES.slice(0, 6);
-  const [present, setPresent] = useState<Record<string, boolean>>(Object.fromEntries(roster.map((a) => [a.id, true])));
+  const { data: athletes = [] } = useAthletes();
+  const child = athletes.find((a) => a.name === "Aldi Setiawan") ?? athletes[0];
+  const month = new Date().toISOString().slice(0, 7);
+  const { data: attendance = [] } = useAttendance(child?.id ?? "", month);
 
   if (isParent) {
-    const recent = [
-      { d: "10 Jun 2026", t: "Latihan U-14 B", s: "Hadir" },
-      { d: "8 Jun 2026", t: "Latihan U-14 B", s: "Hadir" },
-      { d: "5 Jun 2026", t: "Friendly Match", s: "Hadir" },
-      { d: "3 Jun 2026", t: "Latihan U-14 B", s: "Izin" },
-      { d: "1 Jun 2026", t: "Latihan U-14 B", s: "Hadir" },
-    ];
+    const total = attendance.length;
+    const hadir = attendance.filter((a) => a.status === "present").length;
+    const rate = total ? Math.round((hadir / total) * 100) : 0;
     return (
-      <DashboardLayout title="Attendance" subtitle="Riwayat kehadiran Aldi Setiawan">
+      <DashboardLayout title="Attendance" subtitle={`Riwayat kehadiran ${child?.name ?? "anak"}`}>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat l="Total Sesi" v="48" />
-          <Stat l="Hadir" v="46 (96%)" />
-          <Stat l="Izin / Absen" v="2" />
+          <Stat l="Total Sesi (bulan ini)" v={String(total)} />
+          <Stat l="Hadir" v={`${hadir} (${rate}%)`} />
+          <Stat l="Izin / Absen" v={String(total - hadir)} />
         </div>
         <Card className="mt-6 border-border/70">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">Riwayat Terbaru</h2>
             <div className="mt-4 space-y-2">
-              {recent.map((r, i) => (
-                <div key={i} className="flex items-center justify-between rounded-lg border border-border p-3">
-                  <div><p className="text-sm font-medium">{r.t}</p><p className="text-xs text-muted-foreground">{r.d}</p></div>
-                  <Badge variant="secondary" className={r.s === "Hadir" ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>{r.s}</Badge>
+              {attendance.slice(0, 10).map((r) => (
+                <div key={r.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div><p className="text-sm font-medium">Sesi {r.session_date}</p></div>
+                  <Badge variant="secondary" className={r.status === "present" ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>
+                    {r.status === "present" ? "Hadir" : r.status}
+                  </Badge>
                 </div>
               ))}
+              {attendance.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Belum ada data absensi bulan ini.</p>}
             </div>
           </CardContent>
         </Card>
@@ -56,6 +56,11 @@ function AttendancePage() {
   }
 
   // Coach / Admin take attendance
+  const roster = athletes.slice(0, 12);
+  const [present, setPresent] = useState<Record<string, boolean>>(
+    Object.fromEntries(roster.map((a) => [a.id, true]))
+  );
+
   return (
     <DashboardLayout
       title="Take Attendance"
@@ -68,13 +73,14 @@ function AttendancePage() {
             <div key={a.id} className={`flex items-center gap-3 p-3 ${i !== roster.length - 1 ? "border-b border-border" : ""}`}>
               <Checkbox checked={present[a.id]} onCheckedChange={(v) => setPresent({ ...present, [a.id]: !!v })} />
               <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary-soft text-xs text-primary">{a.name.split(" ").map(p=>p[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
-              <div className="flex-1"><p className="text-sm font-medium">{a.name}</p><p className="text-xs text-muted-foreground">{a.team} · {a.position}</p></div>
+              <div className="flex-1"><p className="text-sm font-medium">{a.name}</p><p className="text-xs text-muted-foreground">{a.team ?? "—"} · {a.position ?? "—"}</p></div>
               <Badge variant="secondary" className={present[a.id] ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground"}>{present[a.id] ? "Hadir" : "Absen"}</Badge>
             </div>
           ))}
+          {roster.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">Belum ada atlet terdaftar.</p>}
         </CardContent>
       </Card>
-      {!isCoach && <p className="mt-4 text-xs text-muted-foreground">Tip: Coach role memiliki akses lengkap untuk input skor evaluasi.</p>}
+      {role === "coach" && <p className="mt-4 text-xs text-muted-foreground">Tip: Coach role memiliki akses lengkap untuk input skor evaluasi.</p>}
     </DashboardLayout>
   );
 }

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { ATHLETES } from "@/lib/demo-data";
-import { SESSIONS } from "./training.index";
+import { useSessionList } from "./training.index";
 import { SKILL_CATEGORIES } from "@/lib/assessment-data";
 
 export const Route = createFileRoute("/training/$sessionId/print")({
@@ -13,7 +13,8 @@ export const Route = createFileRoute("/training/$sessionId/print")({
 
 function PrintSheetPage() {
   const { sessionId } = Route.useParams();
-  const session = SESSIONS.find((s) => s.id === sessionId) ?? SESSIONS[0];
+  const { data: sessions = [] } = useSessionList();
+  const session = sessions.find((s) => s.id === sessionId) ?? sessions[0];
   const roster = ATHLETES.slice(0, 12);
 
   useEffect(() => {
@@ -51,10 +52,10 @@ function PrintSheetPage() {
 
         {/* Session Info */}
         <div className="mt-4 grid grid-cols-4 gap-3 text-[11px]">
-          <Info l="Coach" v={session.coach} />
-          <Info l="Team" v={session.team} />
-          <Info l="Training Date" v={session.date} />
-          <Info l="Session" v={session.title} />
+          <Info l="Program" v={session?.programs?.title ?? "—"} />
+          <Info l="Focus" v={session?.focus ?? "—"} />
+          <Info l="Training Date" v={session?.session_date ?? ""} />
+          <Info l="Session" v={session?.title ?? "—"} />
         </div>
 
         {/* Scale legend */}
@@ -105,7 +106,7 @@ function PrintSheetPage() {
           <div>
             <p>Tanggal: ______________________</p>
             <div className="mt-10 border-t border-gray-500 pt-1 text-center">
-              Tanda Tangan Coach<br /><b>{session.coach}</b>
+              Tanda Tangan Coach<br /><b>{session?.programs?.title ?? "Coach"}</b>
             </div>
           </div>
           <div>
