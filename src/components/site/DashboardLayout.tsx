@@ -5,7 +5,7 @@ import {
   Activity, CalendarCheck, ChartLine, CreditCard, Home, LogOut, Settings, Trophy,
   UsersRound, Menu, Bell, Search, Megaphone, Building2, ClipboardList,
   Sparkles, Heart, MessageSquare, TrendingUp, Wallet, Target, BarChart3,
-  BookOpen, LayoutTemplate, Dumbbell, Award, ScanLine,
+  BookOpen, LayoutTemplate, Dumbbell, Award, ScanLine, ShieldCheck, UserCog,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,25 @@ type NavItem = { icon: typeof Home; label: string; to: string };
 
 /* Fallback: NAV_BY_ROLE statis (dipakai kalau /auth/menus belum tersedia) */
 const NAV_BY_ROLE: Record<Role, NavItem[]> = {
+  superadmin: [
+    { icon: Home, label: "Dashboard", to: "/dashboard" },
+    { icon: UsersRound, label: "Athletes", to: "/athletes" },
+    { icon: Megaphone, label: "Coaches", to: "/coaches" },
+    { icon: BookOpen, label: "Training Programs", to: "/programs" },
+    { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
+    { icon: Dumbbell, label: "Drill Library", to: "/drills" },
+    { icon: Activity, label: "Training Sessions", to: "/training" },
+    { icon: Target, label: "Skill Assessment", to: "/assessment" },
+    { icon: Award, label: "Match Performance", to: "/match-performance" },
+    { icon: BarChart3, label: "Assessment Insights", to: "/insights" },
+    { icon: CreditCard, label: "Payments", to: "/payments" },
+    { icon: Wallet, label: "Revenue", to: "/revenue" },
+    { icon: CalendarCheck, label: "Schedule", to: "/schedule" },
+    { icon: ChartLine, label: "Reports", to: "/reports" },
+    { icon: Settings, label: "Settings", to: "/settings" },
+    { icon: ShieldCheck, label: "Role Management", to: "/role-management" },
+    { icon: UserCog, label: "User Management", to: "/user-management" },
+  ],
   owner: [
     { icon: Home, label: "Dashboard", to: "/dashboard" },
     { icon: UsersRound, label: "Athletes Overview", to: "/athletes" },
@@ -78,6 +97,7 @@ const ICON_MAP: Record<string, typeof Home> = {
   Home, UsersRound, Megaphone, BookOpen, Wallet, ChartLine, Settings,
   LayoutTemplate, Dumbbell, Activity, Target, ScanLine, Award, BarChart3,
   CreditCard, CalendarCheck, TrendingUp, ClipboardList, MessageSquare,
+  ShieldCheck, UserCog,
 };
 
 interface MenuApiItem { label: string; icon: string; to: string; permission: string | null }
@@ -187,6 +207,7 @@ function Brand() {
 }
 
 const ROLE_ICON: Record<Role, typeof Building2> = {
+  superadmin: ShieldCheck,
   owner: Building2,
   admin: Settings,
   coach: Megaphone,

@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 
-export type Role = "owner" | "admin" | "coach" | "parent";
+export type Role = "superadmin" | "owner" | "admin" | "coach" | "parent";
 
 export const ROLE_USERS: Record<Role, { name: string; title: string; initials: string }> = {
+  superadmin: { name: "Super Admin", title: "Super Administrator", initials: "SA" },
   owner: { name: "Budi Santoso", title: "Academy Owner", initials: "BS" },
   admin: { name: "Sarah Wijaya", title: "Academy Admin", initials: "SW" },
   coach: { name: "Coach Rangga", title: "Head Coach", initials: "CR" },
@@ -10,6 +11,7 @@ export const ROLE_USERS: Record<Role, { name: string; title: string; initials: s
 };
 
 export const ROLE_LABEL: Record<Role, string> = {
+  superadmin: "Super Admin",
   owner: "Academy Owner",
   admin: "Academy Admin",
   coach: "Coach",

@@ -411,3 +411,107 @@ export function useCreateSession() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sessions"] }),
   });
 }
+
+/* ═══════════ SUPERADMIN / ADMIN PANEL ═══════════ */
+
+export interface RoleInfo {
+  role: string;
+  label: string;
+  description: string | null;
+  is_system: boolean;
+  permissions: string[];
+}
+
+export interface PermissionInfo {
+  code: string;
+  label: string;
+}
+
+export interface MenuItemInput {
+  label: string;
+  icon: string;
+  path: string;
+  sort_order: number;
+}
+
+export interface AdminUser {
+  id: string;
+  full_name: string;
+  role: string;
+  academy_id: string | null;
+  created_at: string;
+}
+
+export function useAdminRoles() {
+  return useQuery({
+    queryKey: ["admin-roles"],
+    queryFn: () => apiData<{ roles: RoleInfo[]; permissions: PermissionInfo[] }>("/admin/roles"),
+    staleTime: 30_000,
+  });
+}
+
+export function useAdminUsers() {
+  return useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => apiData<AdminUser[]>("/admin/users"),
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateRolePermissions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ role, permissions, label, description }: { role: string; permissions: string[]; label?: string; description?: string | null }) =>
+      api<{ data: RoleInfo }>(`/admin/roles/${role}`, {
+        method: "PUT",
+        body: JSON.stringify({ role, permissions, label, description }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
+  });
+}
+
+export function useCreateRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { role: string; label: string; description?: string | null; permissions: string[]; menus?: MenuItemInput[] }) =>
+      api<{ data: RoleInfo }>("/admin/roles", { method: "POST", body: JSON.stringify(input) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
+  });
+}
+
+export function useDeleteRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (role: string) => api<{ ok: boolean }>(`/admin/roles/${role}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
+  });
+}
+
+export function useAssignUserRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      api<{ data: { user_id: string; role: string } }>(`/admin/users/${userId}/role`, {
+        method: "PUT",
+        body: JSON.stringify({ role }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-users"] }),
+  });
+}
+
+export function useCreateAdminUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { email: string; password: string; full_name: string; role: string }) =>
+      api<{ data: AdminUser }>("/admin/users", { method: "POST", body: JSON.stringify(input) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-users"] }),
+  });
+}
+
+export function useDeleteAdminUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => api<{ ok: boolean }>(`/admin/users/${userId}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-users"] }),
+  });
+}

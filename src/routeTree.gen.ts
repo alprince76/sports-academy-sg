@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UserManagementRouteImport } from './routes/user-management'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionBuilderRouteImport } from './routes/session-builder'
 import { Route as ScheduleRouteImport } from './routes/schedule'
+import { Route as RoleManagementRouteImport } from './routes/role-management'
 import { Route as RevenueRouteImport } from './routes/revenue'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProgressRouteImport } from './routes/progress'
@@ -38,6 +40,11 @@ import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athlet
 import { Route as AssessmentImportRouteImport } from './routes/assessment.import'
 import { Route as TrainingSessionIdPrintRouteImport } from './routes/training.$sessionId.print'
 
+const UserManagementRoute = UserManagementRouteImport.update({
+  id: '/user-management',
+  path: '/user-management',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -51,6 +58,11 @@ const SessionBuilderRoute = SessionBuilderRouteImport.update({
 const ScheduleRoute = ScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoleManagementRoute = RoleManagementRouteImport.update({
+  id: '/role-management',
+  path: '/role-management',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RevenueRoute = RevenueRouteImport.update({
@@ -196,9 +208,11 @@ export interface FileRoutesByFullPath {
   '/progress': typeof ProgressRoute
   '/reports': typeof ReportsRoute
   '/revenue': typeof RevenueRoute
+  '/role-management': typeof RoleManagementRoute
   '/schedule': typeof ScheduleRoute
   '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
+  '/user-management': typeof UserManagementRoute
   '/assessment/import': typeof AssessmentImportRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/drills/new': typeof DrillsNewRoute
@@ -226,9 +240,11 @@ export interface FileRoutesByTo {
   '/progress': typeof ProgressRoute
   '/reports': typeof ReportsRoute
   '/revenue': typeof RevenueRoute
+  '/role-management': typeof RoleManagementRoute
   '/schedule': typeof ScheduleRoute
   '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
+  '/user-management': typeof UserManagementRoute
   '/assessment/import': typeof AssessmentImportRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/drills/new': typeof DrillsNewRoute
@@ -257,9 +273,11 @@ export interface FileRoutesById {
   '/progress': typeof ProgressRoute
   '/reports': typeof ReportsRoute
   '/revenue': typeof RevenueRoute
+  '/role-management': typeof RoleManagementRoute
   '/schedule': typeof ScheduleRoute
   '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
+  '/user-management': typeof UserManagementRoute
   '/assessment/import': typeof AssessmentImportRoute
   '/athletes/$athleteId': typeof AthletesAthleteIdRoute
   '/drills/new': typeof DrillsNewRoute
@@ -289,9 +307,11 @@ export interface FileRouteTypes {
     | '/progress'
     | '/reports'
     | '/revenue'
+    | '/role-management'
     | '/schedule'
     | '/session-builder'
     | '/settings'
+    | '/user-management'
     | '/assessment/import'
     | '/athletes/$athleteId'
     | '/drills/new'
@@ -319,9 +339,11 @@ export interface FileRouteTypes {
     | '/progress'
     | '/reports'
     | '/revenue'
+    | '/role-management'
     | '/schedule'
     | '/session-builder'
     | '/settings'
+    | '/user-management'
     | '/assessment/import'
     | '/athletes/$athleteId'
     | '/drills/new'
@@ -349,9 +371,11 @@ export interface FileRouteTypes {
     | '/progress'
     | '/reports'
     | '/revenue'
+    | '/role-management'
     | '/schedule'
     | '/session-builder'
     | '/settings'
+    | '/user-management'
     | '/assessment/import'
     | '/athletes/$athleteId'
     | '/drills/new'
@@ -380,9 +404,11 @@ export interface RootRouteChildren {
   ProgressRoute: typeof ProgressRoute
   ReportsRoute: typeof ReportsRoute
   RevenueRoute: typeof RevenueRoute
+  RoleManagementRoute: typeof RoleManagementRoute
   ScheduleRoute: typeof ScheduleRoute
   SessionBuilderRoute: typeof SessionBuilderRoute
   SettingsRoute: typeof SettingsRoute
+  UserManagementRoute: typeof UserManagementRoute
   AthletesAthleteIdRoute: typeof AthletesAthleteIdRoute
   DrillsNewRoute: typeof DrillsNewRoute
   TrainingSessionIdRoute: typeof TrainingSessionIdRouteWithChildren
@@ -393,6 +419,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/user-management': {
+      id: '/user-management'
+      path: '/user-management'
+      fullPath: '/user-management'
+      preLoaderRoute: typeof UserManagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -412,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/schedule'
       fullPath: '/schedule'
       preLoaderRoute: typeof ScheduleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/role-management': {
+      id: '/role-management'
+      path: '/role-management'
+      fullPath: '/role-management'
+      preLoaderRoute: typeof RoleManagementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/revenue': {
@@ -644,9 +684,11 @@ const rootRouteChildren: RootRouteChildren = {
   ProgressRoute: ProgressRoute,
   ReportsRoute: ReportsRoute,
   RevenueRoute: RevenueRoute,
+  RoleManagementRoute: RoleManagementRoute,
   ScheduleRoute: ScheduleRoute,
   SessionBuilderRoute: SessionBuilderRoute,
   SettingsRoute: SettingsRoute,
+  UserManagementRoute: UserManagementRoute,
   AthletesAthleteIdRoute: AthletesAthleteIdRoute,
   DrillsNewRoute: DrillsNewRoute,
   TrainingSessionIdRoute: TrainingSessionIdRouteWithChildren,
