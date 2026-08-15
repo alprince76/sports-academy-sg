@@ -112,20 +112,21 @@ function toNavItems(menus: MenuApiItem[]): NavItem[] {
 
 /**
  * Menu dinamis dari backend /auth/menus dengan cache localStorage.
- * Render langsung dari cache saat load (anti-blink), fetch async lalu update cache.
+ * Cache dibaca SINKRON di useState initializer → render pertama langsung penuh,
+ * tidak ada flash menu kosong (anti-blink). Fetch async hanya update cache di background.
  * Fallback NAV_BY_ROLE hanya dipakai kalau belum ada cache & fetch gagal.
  */
 function useDynamicMenus(role: Role): NavItem[] {
-  const [cached, setCached] = useState<MenuApiItem[] | null>(null);
-
-  // Baca cache segera (client-side only)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  // SINKRON: baca cache langsung saat render pertama (bukan useEffect)
+  const [cached] = useState<MenuApiItem[] | null>(() => {
+    if (typeof window === "undefined") return null;
     try {
       const raw = localStorage.getItem(MENUS_CACHE_KEY(role));
-      if (raw) setCached(JSON.parse(raw));
-    } catch { /* ignore */ }
-  }, [role]);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const { data, isError } = useQuery({
     queryKey: ["menus", role],
@@ -144,10 +145,24 @@ function useDynamicMenus(role: Role): NavItem[] {
   if (data?.menus?.length) return toNavItems(data.menus);
   // 2) cache lokal (render instan, identik dengan data asli — tidak blink)
   if (cached?.length) return toNavItems(cached);
-  // 3) terakhir: fallback statis (hanya kalau fetch gagal & belum ada cache)
+  // 3) fallback statis (hanya kalau fetch gagal & belum ada cache)
   if (isError) return NAV_BY_ROLE[role] ?? [];
-  // 4) masih loading & belum ada cache: tampilkan kosong (hindari flash menu salah)
-  return [];
+  // 4) masih loading & belum ada cache: fallback statis supaya sidebar TIDAK kosong/blink
+  return NAV_BY_ROLE[role] ?? [];
+}
+
+/** Skeleton sidebar — netral (identik di SSR & client) supaya tidak ada hydration flash. */
+function NavSkeleton() {
+  return (
+    <nav className="flex flex-col gap-1 p-4" aria-hidden>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+          <div className="h-4 w-4 animate-pulse rounded bg-secondary" />
+          <div className="h-3.5 flex-1 animate-pulse rounded bg-secondary" />
+        </div>
+      ))}
+    </nav>
+  );
 }
 
 function NavList({ pathname, role, onNav }: { pathname: string; role: Role; onNav?: () => void }) {
@@ -214,23 +229,41 @@ const ROLE_ICON: Record<Role, typeof Building2> = {
   parent: Heart,
 };
 
-/** Nama user dari backend /auth/me (fallback ke ROLE_USERS demo). */
+/** Nama user dari localStorage (sinkron, anti-blink) + refresh dari /auth/me di background. */
 function useUserInfo(role: Role) {
-  const [name, setName] = useState<string | null>(null);
+  // SINKRON: baca nama langsung di render pertama — navbar tidak flash "Demo User"
+  const [name] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("sportacademy.user");
+  });
+
+  // Refresh nama dari backend di background (update cache, tanpa blink)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("sportacademy.user");
-    if (stored) setName(stored);
     apiData<{ profile?: { full_name?: string | null } }>("/auth/me")
       .then((me) => {
         if (me.profile?.full_name) {
-          setName(me.profile.full_name);
           localStorage.setItem("sportacademy.user", me.profile.full_name);
         }
       })
       .catch(() => { /* fallback demo */ });
   }, [role]);
+
   return name;
+}
+
+// Flag global: true setelah React pernah hydrasi di browser.
+// Layout di-navigasi berikutnya langsung render asli (tanpa skeleton flash).
+let hydrated = false;
+
+/** Deteksi client-mounted: true hanya setelah React hydrasi di browser. */
+function useMounted() {
+  const [mounted, setMounted] = useState(hydrated);
+  useEffect(() => {
+    hydrated = true;
+    setMounted(true);
+  }, []);
+  return mounted;
 }
 
 export function DashboardLayout({
@@ -245,6 +278,7 @@ export function DashboardLayout({
   children: ReactNode;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const mounted = useMounted();
   const role = useRole();
   const fullName = useUserInfo(role);
   const navigate = useNavigate();
@@ -269,10 +303,11 @@ export function DashboardLayout({
         <Brand />
         <div className="px-4 pt-3">
           <Badge variant="secondary" className="gap-1 bg-primary-soft text-primary">
-            <Sparkles className="h-3 w-3" /> {ROLE_LABEL[role]} View
+            <Sparkles className="h-3 w-3" /> {mounted ? ROLE_LABEL[role] : "Memuat"} View
           </Badge>
         </div>
-        <NavList pathname={pathname} role={role} />
+        {/* Skeleton netral sebelum mounted — SSR & client render SAMA (anti hydration-flash) */}
+        {!mounted ? <NavSkeleton /> : <NavList pathname={pathname} role={role} />}
         <div className="mt-auto p-4">
           <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-sidebar-accent/50">
             <LogOut className="h-4 w-4" /> Keluar
@@ -291,7 +326,7 @@ export function DashboardLayout({
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0">
                 <Brand />
-                <NavList pathname={pathname} role={role} />
+                {!mounted ? <NavSkeleton /> : <NavList pathname={pathname} role={role} />}
               </SheetContent>
             </Sheet>
             <div className="hidden md:block">
@@ -315,19 +350,19 @@ export function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition hover:bg-secondary">
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground">{mounted ? initials : ".."}</AvatarFallback>
                   </Avatar>
                   <div className="hidden text-left sm:block">
-                    <p className="text-xs font-semibold leading-tight">{fallbackName}</p>
-                    <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[role]}</p>
+                    <p className="text-xs font-semibold leading-tight">{mounted ? fallbackName : "Memuat…"}</p>
+                    <p className="text-[10px] text-muted-foreground">{mounted ? ROLE_LABEL[role] : ""}</p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
-                    <span>{fallbackName}</span>
-                    <span className="text-xs font-normal text-muted-foreground">{ROLE_LABEL[role]}</span>
+                    <span>{mounted ? fallbackName : "Memuat…"}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{mounted ? ROLE_LABEL[role] : ""}</span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
