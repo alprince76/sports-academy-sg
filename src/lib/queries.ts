@@ -140,6 +140,26 @@ export function useCreateAthlete() {
   });
 }
 
+export function useUpdateAthlete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Athlete> & { id: string }) =>
+      api<{ data: Athlete }>(`/athletes/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["athletes"] }),
+  });
+}
+
+export function useDeleteAthlete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/athletes/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["athletes"] }),
+  });
+}
+
 /* ═══════════ FASE 2 ═══════════ */
 
 export interface Schedule {

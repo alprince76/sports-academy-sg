@@ -6,17 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Trophy, Phone, User, FileDown, HeartPulse, CalendarClock } from "lucide-react";
-import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
+import { healthStatusColor } from "@/lib/demo-data";
 import { PERIODIC_ASSESSMENTS, SKILL_CATEGORIES, SKILL_SCALE, getAthleteEvaluations, type SkillCategory } from "@/lib/assessment-data";
 import { RadarChart } from "@/components/site/RadarChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useAthletes } from "@/lib/queries";
 
 export const Route = createFileRoute("/athletes/$athleteId")({
   head: ({ params }) => {
-    const a = ATHLETES.find((x) => x.id === params.athleteId);
-    return { meta: [{ title: `${a?.name ?? "Atlet"} — SportAcademy` }] };
+    return { meta: [{ title: `Atlet — SportAcademy` }] };
   },
   component: AthleteDetail,
   notFoundComponent: () => (
@@ -28,8 +28,19 @@ export const Route = createFileRoute("/athletes/$athleteId")({
 
 function AthleteDetail() {
   const { athleteId } = Route.useParams();
-  const a = ATHLETES.find((x) => x.id === athleteId);
+  const { data: athletes = [], isLoading } = useAthletes();
+  const a = athletes.find((x) => x.id === athleteId);
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Memuat...">
+        <Card><CardContent className="p-12 text-center text-sm text-muted-foreground">Memuat data atlet...</CardContent></Card>
+      </DashboardLayout>
+    );
+  }
   if (!a) throw notFound();
+
+  const ageMatch = (a.age_group ?? "").match(/(\d+)/);
+  const age = ageMatch ? `${ageMatch[1]} tahun` : "—";
 
   const history = [
     { date: "3 Jun 2026", type: "Latihan", note: "Drill finishing — 5 gol dari 8 percobaan", score: 88 },
@@ -43,10 +54,14 @@ function AthleteDetail() {
     { week: "W25", v: 100 }, { week: "W26", v: 90 },
   ];
 
+  const skills = a.skills ?? [];
+  const achievements = a.achievements ?? [];
+  const health = a.health ?? { status: "Healthy" };
+
   return (
     <DashboardLayout
       title={a.name}
-      subtitle={`${a.age} tahun · ${a.position} · ${a.team}`}
+      subtitle={`${age} · ${a.position ?? "—"} · ${a.team ?? "—"}`}
       actions={
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => { toast.success("Export started", { description: "PDF report sedang disiapkan" }); setTimeout(() => window.print(), 400); }}>
@@ -74,14 +89,14 @@ function AthleteDetail() {
             </div>
             <div className="mt-6 space-y-3 text-sm">
               <p className="text-xs font-semibold uppercase text-muted-foreground">Orang Tua</p>
-              <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{a.parent.name}</div>
-              <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{a.parent.phone}</div>
+              <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{a.parent_name ?? "—"}</div>
+              <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{a.parent_phone ?? "—"}</div>
             </div>
             <div className="mt-6">
               <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Achievements</p>
               <div className="flex flex-wrap gap-2">
-                {a.achievements.length === 0 && <p className="text-xs text-muted-foreground">Belum ada pencapaian.</p>}
-                {a.achievements.map((ach) => (
+                {achievements.length === 0 && <p className="text-xs text-muted-foreground">Belum ada pencapaian.</p>}
+                {achievements.map((ach) => (
                   <Badge key={ach} variant="secondary" className="gap-1 bg-accent text-accent-foreground">
                     <Trophy className="h-3 w-3" />{ach}
                   </Badge>
@@ -94,15 +109,15 @@ function AthleteDetail() {
                 <p className="text-xs font-semibold uppercase text-muted-foreground">Health Status</p>
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <Badge variant="secondary" className={healthStatusColor(a.health.status)}>{a.health.status}</Badge>
-                <span className="text-[11px] text-muted-foreground">Updated {a.health.updatedAt}</span>
+                <Badge variant="secondary" className={healthStatusColor(health.status as any)}>{health.status}</Badge>
+                <span className="text-[11px] text-muted-foreground">Updated {health.updatedAt ?? "—"}</span>
               </div>
-              {a.health.note && (
-                <p className="mt-2 text-xs text-muted-foreground">{a.health.note}</p>
+              {health.note && (
+                <p className="mt-2 text-xs text-muted-foreground">{health.note}</p>
               )}
-              {a.health.expectedReturn && (
+              {health.expectedReturn && (
                 <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                  <CalendarClock className="h-3 w-3" /> Perkiraan kembali: <span className="font-medium text-foreground">{a.health.expectedReturn}</span>
+                  <CalendarClock className="h-3 w-3" /> Perkiraan kembali: <span className="font-medium text-foreground">{health.expectedReturn}</span>
                 </p>
               )}
             </div>
@@ -114,7 +129,7 @@ function AthleteDetail() {
             <CardContent className="p-6">
               <h2 className="font-display text-lg font-semibold">Skill Breakdown</h2>
               <div className="mt-5 space-y-4">
-                {a.skills.map((s) => (
+                {skills.map((s) => (
                   <div key={s.name}>
                     <div className="mb-1 flex justify-between text-sm">
                       <span>{s.name}</span>
@@ -125,6 +140,7 @@ function AthleteDetail() {
                     </div>
                   </div>
                 ))}
+                {skills.length === 0 && <p className="text-sm text-muted-foreground">Belum ada data skill.</p>}
               </div>
             </CardContent>
           </Card>
