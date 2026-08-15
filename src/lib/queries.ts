@@ -37,6 +37,27 @@ export interface Program {
   description: string | null;
   sessions_per_week: number;
   active: boolean;
+  age_group: string | null;
+  team: string | null;
+  season: string | null;
+  head_coach: string | null;
+  assistant_coach: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  primary_objective: string | null;
+  secondary_objective: string | null;
+  expected_outcomes: string | null;
+  total_sessions: number | null;
+  session_duration: number | null;
+  intensity: string | null;
+  focus: unknown[] | null;
+  target_skills: unknown[] | null;
+  evaluation_method: string | null;
+  review_frequency: string | null;
+  equipment: string | null;
+  instructions: string | null;
+  medical: string | null;
+  notes: string | null;
 }
 
 export interface Drill {
@@ -100,6 +121,53 @@ export function usePrograms() {
     queryFn: () => apiData<Program[]>(`/programs?academy_id=${getAcademyId()}`),
     staleTime: 30_000,
     enabled: !!getAcademyId(),
+  });
+}
+
+export function useCreateProgram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<Program>) => api<{ data: Program }>("/programs", {
+      method: "POST",
+      body: JSON.stringify({ academy_id: getAcademyId(), ...input }),
+    }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["programs"] }),
+  });
+}
+
+export interface ProgramDetail extends Program {
+  sessions: Session[];
+}
+
+export function useProgramDetail(id: string) {
+  return useQuery({
+    queryKey: ["program", id],
+    queryFn: () => apiData<ProgramDetail>(`/programs/${id}`),
+    staleTime: 30_000,
+    enabled: !!id,
+  });
+}
+
+export function useUpdateProgram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Program> & { id: string }) =>
+      api<{ data: Program }>(`/programs/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["programs"] });
+      qc.invalidateQueries({ queryKey: ["program"] });
+    },
+  });
+}
+
+export function useDeleteProgram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/programs/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["programs"] }),
   });
 }
 

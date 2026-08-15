@@ -8,21 +8,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Copy, X, Plus, Clock, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import {
-  SESSION_TEMPLATES, DRILLS, DRILL_CATEGORIES, BLOCK_META,
+  SESSION_TEMPLATES, DRILL_CATEGORIES, BLOCK_META,
   type SessionTemplate, type DrillCategory,
 } from "@/lib/training-data";
+import { useDrills, useCreateSession } from "@/lib/queries";
 
 export const Route = createFileRoute("/session-builder")({
   head: () => ({ meta: [{ title: "Session Builder — SportAcademy" }] }),
   component: SessionBuilderPage,
 });
 
+/** Mapping kategori drill backend → blok sesi FE */
+const CATEGORY_TO_BLOCK: Record<string, DrillCategory> = {
+  Mobility: "Warm Up",
+  "Ball Handling": "Fundamental",
+  Shooting: "Skill Development",
+  Finishing: "Skill Development",
+  Defense: "Small Side Game",
+};
+
 function SessionBuilderPage() {
   const [templateId, setTemplateId] = useState(SESSION_TEMPLATES[0].id);
   const template = SESSION_TEMPLATES.find((t) => t.id === templateId)!;
   const [blocks, setBlocks] = useState(template.blocks);
+  const { data: drills = [] } = useDrills();
+  const createSession = useCreateSession();
+  const [saving, setSaving] = useState(false);
 
-  const drillById = (id: string) => DRILLS.find((d) => d.id === id);
+  // backend drills: { id, title, focus, difficulty, duration, category }
+  const drillById = (id: string) => drills.find((d) => d.id === id);
   const blockMinutes = (bId: DrillCategory) =>
     (blocks.find((b) => b.id === bId)?.drillIds ?? [])
       .map((d) => drillById(d)?.duration ?? 0)
@@ -33,9 +47,10 @@ function SessionBuilderPage() {
     setBlocks((prev) => prev.map((b) => b.id === block ? { ...b, drillIds: b.drillIds.filter((x) => x !== id) } : b));
   };
 
-  const addDrillToBlock = (block: DrillCategory, id: string) => {
+  const addDrillToBlock = (category: string, id: string) => {
+    const block = CATEGORY_TO_BLOCK[category] ?? "Fundamental";
     setBlocks((prev) => prev.map((b) => b.id === block ? { ...b, drillIds: [...b.drillIds, id] } : b));
-    toast.success("Drill ditambahkan");
+    toast.success(`Drill ditambahkan ke ${block}`);
   };
 
   const switchTemplate = (id: string) => {
@@ -44,14 +59,36 @@ function SessionBuilderPage() {
     setBlocks(t.blocks);
   };
 
+  const saveTemplate = () => {
+    setSaving(true);
+    createSession.mutate({
+      title: template.name,
+      session_date: new Date().toISOString().slice(0, 10),
+      focus: template.focus,
+      blocks: blocks.map((b) => ({
+        category: b.id,
+        targetMinutes: b.targetMinutes,
+        drillIds: b.drillIds,
+      })),
+    }, {
+      onSuccess: () => { toast.success("Template tersimpan ke backend", { description: template.name }); setSaving(false); },
+      onError: (e: any) => { toast.error(e?.message ?? "Gagal menyimpan template"); setSaving(false); },
+    });
+  };
+
+  const duplicateTemplate = () => {
+    setBlocks((prev) => prev.map((b) => ({ ...b, drillIds: [...b.drillIds] })));
+    toast.success("Session duplicated");
+  };
+
   return (
     <DashboardLayout
       title="Session Builder"
       subtitle="Susun template sesi latihan reusable. Drag-friendly block dari Warm Up sampai Cool Down."
       actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.success("Session duplicated")}><Copy className="mr-1 h-4 w-4" />Duplicate</Button>
-          <Button onClick={() => toast.success("Template saved", { description: template.name })}><Save className="mr-1 h-4 w-4" />Save Template</Button>
+          <Button variant="outline" onClick={duplicateTemplate}><Copy className="mr-1 h-4 w-4" />Duplicate</Button>
+          <Button onClick={saveTemplate} disabled={saving}>{saving ? "Menyimpan..." : <><Save className="mr-1 h-4 w-4" />Save Template</>}</Button>
         </div>
       }
     >
@@ -95,7 +132,7 @@ function SessionBuilderPage() {
                           <GripVertical className="h-4 w-4 text-muted-foreground" />
                           <div className="flex-1 min-w-0">
                             <p className="truncate text-sm font-semibold">{d.title}</p>
-                            <p className="text-xs text-muted-foreground">{d.skillFocus} · {d.difficulty} · {d.duration} min</p>
+                            <p className="text-xs text-muted-foreground">{d.focus ?? d.category} · {d.difficulty} · {d.duration} min</p>
                           </div>
                           <Button size="icon" variant="ghost" onClick={() => removeDrill(cat, did)}>
                             <X className="h-4 w-4" />
@@ -120,22 +157,27 @@ function SessionBuilderPage() {
             <h3 className="font-display text-sm font-semibold">Drill Library</h3>
             <p className="text-xs text-muted-foreground">Klik + untuk masukkan ke block.</p>
             <div className="mt-3 max-h-[70vh] space-y-2 overflow-y-auto pr-1">
-              {DRILLS.map((d) => (
+              {drills.map((d) => (
                 <div key={d.id} className="rounded-lg border border-border p-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold">{d.title}</p>
-                      <p className="text-[10px] text-muted-foreground">{d.skillFocus} · {d.duration}m</p>
+                      <p className="text-[10px] text-muted-foreground">{d.focus ?? d.category} · {d.duration}m</p>
                     </div>
                     <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => addDrillToBlock(d.category, d.id)}>
                       <Plus className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                  <Badge variant="secondary" className={`mt-1.5 text-[10px] ${BLOCK_META[d.category].color}`}>
+                  <Badge variant="secondary" className={`mt-1.5 text-[10px] ${BLOCK_META[CATEGORY_TO_BLOCK[d.category] ?? "Fundamental"]?.color ?? "bg-secondary"}`}>
                     {d.category}
                   </Badge>
                 </div>
               ))}
+              {drills.length === 0 && (
+                <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  Belum ada drill di backend. Tambah lewat API /drills.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

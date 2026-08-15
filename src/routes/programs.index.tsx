@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Calendar, Users, Target as TargetIcon } from "lucide-react";
 import { usePrograms } from "@/lib/queries";
 
-export const Route = createFileRoute("/programs")({
+export const Route = createFileRoute("/programs/")({
   head: () => ({ meta: [{ title: "Training Programs — SportAcademy" }] }),
   component: ProgramsPage,
 });
@@ -30,29 +30,31 @@ function ProgramsPage() {
       )}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {programs.map((p) => (
-          <Card key={p.id} className="border-border/70">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <Badge variant="secondary" className="bg-primary-soft text-primary">{p.category ?? "Umum"}</Badge>
-                <Badge variant="secondary" className={p.active ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground"}>
-                  {p.active ? "Active" : "Inactive"}
-                </Badge>
-              </div>
-              <h3 className="mt-3 font-display text-lg font-semibold leading-tight">{p.title}</h3>
-              {p.description && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{p.description}</p>}
+          <Link key={p.id} to="/programs/$programId" params={{ programId: p.id }} className="group">
+            <Card className="h-full border-border/70 transition-all group-hover:-translate-y-0.5 group-hover:border-primary/40 group-hover:shadow-elevated">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <Badge variant="secondary" className="bg-primary-soft text-primary">{p.category ?? "Umum"}</Badge>
+                  <Badge variant="secondary" className={p.active ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground"}>
+                    {p.active ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <h3 className="mt-3 font-display text-lg font-semibold leading-tight group-hover:text-primary">{p.title}</h3>
+                {p.description && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{p.description}</p>}
 
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-lg bg-secondary/50 p-2">
-                  <p className="flex items-center gap-1 text-muted-foreground"><Calendar className="h-3 w-3" />Sesi/minggu</p>
-                  <p className="mt-0.5 font-display font-bold">{p.sessions_per_week}x</p>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-secondary/50 p-2">
+                    <p className="flex items-center gap-1 text-muted-foreground"><Calendar className="h-3 w-3" />Sesi/minggu</p>
+                    <p className="mt-0.5 font-display font-bold">{p.sessions_per_week}x</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/50 p-2">
+                    <p className="flex items-center gap-1 text-muted-foreground"><Users className="h-3 w-3" />Status</p>
+                    <p className="mt-0.5 font-display font-bold">{p.active ? "Berjalan" : "Nonaktif"}</p>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-secondary/50 p-2">
-                  <p className="flex items-center gap-1 text-muted-foreground"><Users className="h-3 w-3" />Status</p>
-                  <p className="mt-0.5 font-display font-bold">{p.active ? "Berjalan" : "Nonaktif"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
         {programs.length === 0 && !isLoading && !isError && (
           <Card className="col-span-full border-dashed">
