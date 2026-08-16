@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 import { ATHLETES } from "@/lib/demo-data";
+import { useAthletes } from "@/lib/queries";
 import { useSessionList } from "./training.index";
 import { SKILL_CATEGORIES } from "@/lib/assessment-data";
 
@@ -15,7 +16,8 @@ function PrintSheetPage() {
   const { sessionId } = Route.useParams();
   const { data: sessions = [] } = useSessionList();
   const session = sessions.find((s) => s.id === sessionId) ?? sessions[0];
-  const roster = ATHLETES.slice(0, 12);
+  const { data: athletes = [] } = useAthletes();
+  const roster = athletes.slice(0, 12);
 
   useEffect(() => {
     document.body.classList.add("print-sheet-body");

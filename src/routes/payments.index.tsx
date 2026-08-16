@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Download, CreditCard, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useInvoices } from "@/lib/queries";
 
-export const Route = createFileRoute("/payments")({
+export const Route = createFileRoute("/payments/")({
   head: () => ({ meta: [{ title: "Payments — SportAcademy" }] }),
   component: PaymentsPage,
 });
@@ -88,7 +88,9 @@ function PaymentsPage() {
               <tbody>
                 {filtered.map((p) => (
                   <tr key={p.id} className="border-b border-border/50 last:border-0">
-                    <td className="px-5 py-3.5 font-mono text-xs">{p.invoice_no}</td>
+                    <td className="px-5 py-3.5 font-mono text-xs">
+                      <Link to="/payments/$invoiceId" params={{ invoiceId: p.id }} className="hover:text-primary">{p.invoice_no}</Link>
+                    </td>
                     <td className="px-5 py-3.5 font-medium">{p.athletes?.name ?? "—"}</td>
                     <td className="px-5 py-3.5">{p.plan}</td>
                     <td className="px-5 py-3.5 font-medium">{formatRupiah(Number(p.amount))}</td>

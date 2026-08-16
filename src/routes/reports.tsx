@@ -1,174 +1,189 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, FileDown, TrendingUp, Trophy } from "lucide-react";
+import { Download, FileDown, TrendingUp, Trophy, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { ATHLETES } from "@/lib/demo-data";
+import { useReports, getAcademyId } from "@/lib/queries";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({ meta: [{ title: "Reports — SportAcademy" }] }),
   component: ReportsPage,
 });
 
+function formatRupiah(n: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+}
+
 function ReportsPage() {
-  const [exporting, setExporting] = useState(false);
-  const top = [...ATHLETES].sort((a, b) => b.progress - a.progress).slice(0, 5);
+  const { data: r, isLoading, isError } = useReports();
 
   const handleExport = () => {
-    setExporting(true);
-    setTimeout(() => { setExporting(false); toast.success("Laporan PDF berhasil diunduh"); }, 1100);
+    const token = JSON.parse(localStorage.getItem("sb-127-auth-token") ?? "{}")?.access_token;
+    if (!token) { toast.error("Sesi tidak valid"); return; }
+    // buka URL export CSV dengan token di header — pakai fetch + blob download
+    fetch(`http://localhost:8081/reports/export`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `athletes-report-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Laporan CSV berhasil diunduh");
+      })
+      .catch(() => toast.error("Gagal mengunduh laporan"));
   };
 
   return (
     <DashboardLayout
       title="Reports & Analytics"
-      subtitle="Insight performa, kehadiran, dan finansial akademi"
+      subtitle="Insight performa, kehadiran, dan finansial — dari data backend"
       actions={
         <>
-          <Button variant="outline"><Download className="mr-1 h-4 w-4" />Export CSV</Button>
-          <Button onClick={handleExport} disabled={exporting}>
-            <FileDown className="mr-1 h-4 w-4" />{exporting ? "Generating..." : "Download PDF"}
+          <Button variant="outline" onClick={handleExport}><Download className="mr-1 h-4 w-4" />Export CSV</Button>
+          <Button onClick={() => toast.info("Gunakan Export CSV untuk data lengkap")}>
+            <FileDown className="mr-1 h-4 w-4" />Download PDF
           </Button>
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { l: "Total Atlet", v: "128", c: "+12%" },
-          { l: "Attendance Avg", v: "92%", c: "+4%" },
-          { l: "Performance Avg", v: "82", c: "+6" },
-          { l: "Revenue YTD", v: "Rp 248jt", c: "+24%" },
-        ].map((s) => (
-          <Card key={s.l} className="border-border/70">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{s.l}</p>
-                <Badge variant="secondary" className="bg-primary-soft text-primary gap-1"><TrendingUp className="h-3 w-3" />{s.c}</Badge>
-              </div>
-              <p className="mt-3 font-display text-2xl font-bold">{s.v}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {isLoading && (
+        <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-3 p-12 text-center text-sm text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" /> Menyusun laporan...
+        </CardContent></Card>
+      )}
+      {isError && (
+        <Card className="border-dashed"><CardContent className="p-12 text-center text-sm text-muted-foreground">
+          Gagal memuat laporan. Pastikan backend :8081 jalan.
+        </CardContent></Card>
+      )}
 
-      <Tabs defaultValue="performance" className="mt-8">
-        <TabsList>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          <TabsTrigger value="growth">Academy Growth</TabsTrigger>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-        </TabsList>
+      {r && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total Atlet" value={String(r.total_athletes)} sub={`${r.active_athletes} aktif`} />
+            <StatCard label="Attendance Avg" value={`${r.avg_attendance}%`} sub="rata-rata" />
+            <StatCard label="Performance Avg" value={String(r.avg_progress)} sub="progress rata-rata" />
+            <StatCard
+              label="Revenue YTD"
+              value={r.revenue ? formatRupiah(r.revenue.total_paid) : "—"}
+              sub={r.revenue ? `${formatRupiah(r.revenue.outstanding)} outstanding` : "khusus owner/admin"}
+            />
+          </div>
 
-        <TabsContent value="performance" className="mt-4 grid gap-6 lg:grid-cols-3">
-          <Card className="border-border/70 lg:col-span-2">
-            <CardContent className="p-6">
-              <h2 className="font-display text-lg font-semibold">Tren Performa Atlet</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Rata-rata skor evaluasi per bulan</p>
-              <LineChart data={[72, 74, 76, 78, 80, 82]} labels={["Jan","Feb","Mar","Apr","Mei","Jun"]} />
-            </CardContent>
-          </Card>
-          <Card className="border-border/70">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-lg font-semibold">Top Performers</h2>
-              </div>
-              <div className="mt-5 space-y-3">
-                {top.map((a, i) => (
-                  <div key={a.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                    <span className="font-display text-lg font-bold text-muted-foreground">#{i + 1}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{a.name}</p>
-                      <p className="text-xs text-muted-foreground">{a.team}</p>
-                    </div>
-                    <span className="font-display text-lg font-bold text-primary">{a.progress}</span>
+          <Tabs defaultValue="performance" className="mt-8">
+            <TabsList>
+              <TabsTrigger value="performance">Performance</TabsTrigger>
+              <TabsTrigger value="growth">Komposisi</TabsTrigger>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="performance" className="mt-4">
+              <Card className="border-border/70">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-primary" />
+                    <h2 className="font-display text-lg font-semibold">Top Athletes</h2>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="attendance" className="mt-4">
-          <Card className="border-border/70">
-            <CardContent className="p-6">
-              <h2 className="font-display text-lg font-semibold">Attendance per Tim</h2>
-              <div className="mt-5 space-y-4">
-                {[
-                  { t: "U-10", v: 88 }, { t: "U-12 A", v: 94 }, { t: "U-12 B", v: 81 },
-                  { t: "U-14 A", v: 93 }, { t: "U-14 B", v: 90 },
-                ].map((r) => (
-                  <div key={r.t}>
-                    <div className="mb-1 flex justify-between text-sm">
-                      <span>{r.t}</span>
-                      <span className="font-semibold">{r.v}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400" style={{ width: `${r.v}%` }} />
-                    </div>
+                  <p className="mt-1 text-xs text-muted-foreground">5 atlet dengan progress tertinggi.</p>
+                  <div className="mt-4 space-y-2">
+                    {r.top_athletes.map((a, i) => (
+                      <div key={a.name + i} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                        <span className="font-display text-lg font-bold text-primary">#{i + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{a.name}</p>
+                          <p className="text-xs text-muted-foreground">{a.team ?? "—"}</p>
+                        </div>
+                        <Badge variant="secondary" className={a.progress >= 70 ? "bg-primary-soft text-primary" : "bg-amber-100 text-amber-800"}>
+                          <TrendingUp className="mr-1 h-3 w-3" />{a.progress}%
+                        </Badge>
+                      </div>
+                    ))}
+                    {r.top_athletes.length === 0 && (
+                      <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">Belum ada data atlet.</p>
+                    )}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-        <TabsContent value="growth" className="mt-4">
-          <Card className="border-border/70">
-            <CardContent className="p-6">
-              <h2 className="font-display text-lg font-semibold">Pertumbuhan Atlet</h2>
-              <LineChart data={[78, 84, 92, 100, 116, 128]} labels={["Jan","Feb","Mar","Apr","Mei","Jun"]} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="revenue" className="mt-4">
-          <Card className="border-border/70">
-            <CardContent className="p-6">
-              <h2 className="font-display text-lg font-semibold">Revenue per Bulan (juta)</h2>
-              <div className="mt-6 flex h-48 items-end gap-3">
-                {[28, 32, 38, 42, 40, 48].map((v, i) => (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                    <span className="text-xs font-semibold">{v}</span>
-                    <div className="w-full rounded-t-md bg-gradient-to-t from-primary to-emerald-400" style={{ height: `${v * 1.6}%` }} />
-                    <span className="text-xs text-muted-foreground">{["Jan","Feb","Mar","Apr","Mei","Jun"][i]}</span>
+            <TabsContent value="growth" className="mt-4">
+              <Card className="border-border/70">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    <h2 className="font-display text-lg font-semibold">Komposisi Kelompok Umur</h2>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  <div className="mt-4 space-y-3">
+                    {Object.entries(r.age_groups).map(([g, n]) => {
+                      const pct = r.total_athletes ? Math.round((n / r.total_athletes) * 100) : 0;
+                      return (
+                        <div key={g} className="flex items-center gap-3">
+                          <span className="w-20 text-xs font-medium">{g}</span>
+                          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-secondary">
+                            <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="w-8 text-right text-xs font-semibold">{n}</span>
+                        </div>
+                      );
+                    })}
+                    {Object.keys(r.age_groups).length === 0 && (
+                      <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">Belum ada data.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="revenue" className="mt-4">
+              <Card className="border-border/70">
+                <CardContent className="p-6">
+                  <h2 className="font-display text-lg font-semibold">Ringkasan Revenue</h2>
+                  {r.revenue ? (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <RevenueBox label="Total Ditagih" value={formatRupiah(r.revenue.total_invoiced)} />
+                      <RevenueBox label="Terbayar (Lunas)" value={formatRupiah(r.revenue.total_paid)} highlight />
+                      <RevenueBox label="Outstanding" value={formatRupiah(r.revenue.outstanding)} />
+                    </div>
+                  ) : (
+                    <p className="mt-4 rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                      Revenue hanya tampil untuk role owner/admin.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </DashboardLayout>
   );
 }
 
-function LineChart({ data, labels }: { data: number[]; labels: string[] }) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * 100},${100 - ((v - min) / range) * 80 - 10}`).join(" ");
+function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="mt-6">
-      <div className="relative h-48">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-          <defs>
-            <linearGradient id="ln" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="oklch(0.62 0.18 145)" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="oklch(0.62 0.18 145)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <polyline fill="none" stroke="oklch(0.62 0.18 145)" strokeWidth="0.8" points={points} />
-          <polygon fill="url(#ln)" points={`0,100 ${points} 100,100`} />
-        </svg>
-      </div>
-      <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-        {labels.map((l) => <span key={l}>{l}</span>)}
-      </div>
+    <Card className="border-border/70">
+      <CardContent className="p-6">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="mt-3 font-display text-2xl font-bold">{value}</p>
+        {sub && <p className="mt-1 text-[10px] text-muted-foreground">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RevenueBox({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl p-5 text-center ${highlight ? "bg-primary-soft" : "bg-secondary/40"}`}>
+      <p className="font-display text-xl font-bold text-primary">{value}</p>
+      <p className="mt-1 text-[10px] uppercase text-muted-foreground">{label}</p>
     </div>
   );
 }

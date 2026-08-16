@@ -9,9 +9,11 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
+import { useAthletes, useDeleteSession } from "@/lib/queries";
 import { useSessionList } from "./training.index";
 import {
   SKILL_CATEGORIES, SKILL_SCALE, DEFAULT_SESSION_EVAL,
@@ -27,10 +29,13 @@ function SessionPage() {
   const { sessionId } = Route.useParams();
   const { data: sessions = [] } = useSessionList();
   const session = sessions.find((s) => s.id === sessionId) ?? sessions[0];
-  const roster = ATHLETES.slice(0, 6);
+  const { data: athletes = [] } = useAthletes();
+  const roster = athletes.slice(0, 12);
+  const remove = useDeleteSession();
+  const navigate = Route.useNavigate();
 
   const [present, setPresent] = useState<Record<string, boolean>>(
-    Object.fromEntries(roster.map((a) => [a.id, a.health.status !== "Not Available"]))
+    Object.fromEntries(roster.map((a) => [a.id, true]))
   );
   const [scores, setScores] = useState<Record<string, number>>(
     Object.fromEntries(roster.map((a) => [a.id, 75]))
@@ -38,6 +43,7 @@ function SessionPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
 
   const handleSave = () => {
     setSaving(true);
@@ -49,12 +55,26 @@ function SessionPage() {
     }, 900);
   };
 
+  const handleDelete = () => {
+    if (!session) return;
+    remove.mutate(session.id, {
+      onSuccess: () => {
+        toast.success("Sesi dihapus");
+        navigate({ to: "/training" });
+      },
+      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus sesi"),
+    });
+  };
+
   return (
     <DashboardLayout
       title={session?.title ?? "Sesi Latihan"}
       subtitle={`${session?.programs?.title ?? "Program"} · ${session?.focus ?? "—"} · ${session?.session_date ?? ""}`}
       actions={
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDelOpen(true)}>
+            <Trash2 className="mr-1 h-4 w-4" /> Hapus
+          </Button>
           <Button asChild variant="outline"><Link to="/training"><ArrowLeft className="mr-1 h-4 w-4" />Kembali</Link></Button>
           <Button asChild variant="outline"><Link to="/training/$sessionId/print" params={{ sessionId }}><Printer className="mr-1 h-4 w-4" />Print Assessment Sheet</Link></Button>
           <Button asChild><Link to="/assessment/import"><ScanLine className="mr-1 h-4 w-4" />Upload Scanned Sheet</Link></Button>
@@ -97,8 +117,8 @@ function SessionPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className={healthStatusColor(a.health.status)}>
-                            {a.health.status}
+                          <Badge variant="secondary" className={healthStatusColor((a.health?.status ?? "Healthy") as any)}>
+                            {a.health?.status ?? "Healthy"}
                           </Badge>
                           <Badge variant="secondary" className={present[a.id] ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground"}>
                             {present[a.id] ? "Hadir" : "Absen"}
@@ -143,6 +163,22 @@ function SessionPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={delOpen} onOpenChange={setDelOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Hapus Sesi</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Yakin ingin menghapus sesi <span className="font-semibold text-foreground">{session?.title}</span>?
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDelOpen(false)}>Batal</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={remove.isPending}>
+              {remove.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              <Trash2 className="mr-1 h-4 w-4" /> Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
@@ -156,7 +192,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionEvaluationPanel({ roster }: { roster: typeof ATHLETES }) {
+function SessionEvaluationPanel({ roster }: { roster: { id: string; name: string; position?: string | null; team?: string | null; age_group?: string | null; health?: any; skills?: any }[] }) {
   const [evals, setEvals] = useState<Record<string, SessionSkillEvaluation>>(
     Object.fromEntries(roster.map((a) => [a.id, { ...DEFAULT_SESSION_EVAL }]))
   );
@@ -202,8 +238,8 @@ function SessionEvaluationPanel({ roster }: { roster: typeof ATHLETES }) {
 
           <div className="mt-5 space-y-4">
             {roster.map((a) => {
-              const avg = (Object.values(evals[a.id]).reduce((x, y) => x + y, 0) / 6).toFixed(1);
-              const unavailable = a.health.status === "Not Available";
+              const avg = (Object.values(evals[a.id] ?? {}).reduce((x, y) => x + y, 0) / 6).toFixed(1);
+              const unavailable = a.health?.status === "Not Available";
               return (
                 <div key={a.id} className="rounded-2xl border border-border p-5">
                   <div className="flex flex-wrap items-center gap-3">
@@ -214,10 +250,10 @@ function SessionEvaluationPanel({ roster }: { roster: typeof ATHLETES }) {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold">{a.name}</p>
-                      <p className="text-xs text-muted-foreground">{a.position} · {a.team} · {a.ageGroup}</p>
+                      <p className="text-xs text-muted-foreground">{a.position} · {a.team} · {a.age_group ?? ""}</p>
                     </div>
-                    <Badge variant="secondary" className={healthStatusColor(a.health.status)}>
-                      {a.health.status}
+                    <Badge variant="secondary" className={healthStatusColor((a.health?.status ?? "Healthy") as any)}>
+                      {a.health?.status ?? "Healthy"}
                     </Badge>
                     <Badge variant="secondary" className="bg-primary-soft text-primary">
                       Avg {avg}
@@ -242,12 +278,12 @@ function SessionEvaluationPanel({ roster }: { roster: typeof ATHLETES }) {
                             {c} <span className="text-red-500">*</span>
                           </span>
                           <span className="font-display text-sm font-bold text-primary">
-                            {evals[a.id][c]}
+                            {evals[a.id]?.[c] ?? 3}
                           </span>
                         </div>
                         <Slider
                           min={1} max={5} step={1}
-                          value={[evals[a.id][c]]}
+                          value={[evals[a.id]?.[c] ?? 3]}
                           onValueChange={([v]) => setScore(a.id, c, v)}
                           disabled={unavailable}
                         />

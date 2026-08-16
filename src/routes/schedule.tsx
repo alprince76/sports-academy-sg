@@ -8,9 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MapPin, Clock } from "lucide-react";
+import { Plus, MapPin, Clock, Trash2, Pencil, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSchedules, useCreateSchedule, type Schedule } from "@/lib/queries";
+import { useSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, type Schedule } from "@/lib/queries";
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({ meta: [{ title: "Schedule — SportAcademy" }] }),
@@ -23,6 +23,8 @@ const DATES = ["3", "4", "5", "6", "7", "8", "9"];
 function SchedulePage() {
   const [selected, setSelected] = useState<Schedule | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Schedule | null>(null);
+  const [delOpen, setDelOpen] = useState(false);
   const { data: events = [], isLoading, isError } = useSchedules();
 
   return (
@@ -103,40 +105,109 @@ function SchedulePage() {
                 <p><span className="text-muted-foreground">Waktu:</span> {DAYS[selected.day - 1]}, {selected.time}</p>
                 <p><span className="text-muted-foreground">Lokasi:</span> {selected.venue ?? "—"}</p>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSelected(null)}>Tutup</Button>
-                <Button onClick={() => { toast.success("Pengingat dikirim ke pemain"); setSelected(null); }}>Kirim Reminder</Button>
+              <DialogFooter className="gap-2 sm:justify-between">
+                <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => { setDelOpen(true); }}>
+                  <Trash2 className="mr-1 h-4 w-4" /> Hapus
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setSelected(null)}>Tutup</Button>
+                  <Button onClick={() => { setEditing(selected); setSelected(null); }}><Pencil className="mr-1 h-4 w-4" /> Edit</Button>
+                </div>
               </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
 
-      <AddScheduleDialog open={addOpen} onOpenChange={setAddOpen} />
+      <DeleteScheduleDialog open={delOpen} onOpenChange={setDelOpen} schedule={selected} onDeleted={() => setSelected(null)} />
+      <ScheduleFormDialog
+        open={!!editing || addOpen}
+        onOpenChange={(o) => { if (!o) { setEditing(null); setAddOpen(false); } }}
+        schedule={editing}
+      />
     </DashboardLayout>
   );
 }
 
-function AddScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const [title, setTitle] = useState("");
-  const [day, setDay] = useState("1");
-  const [time, setTime] = useState("16:00");
-  const [type, setType] = useState<"training" | "match" | "meeting">("training");
-  const [venue, setVenue] = useState("");
+function DeleteScheduleDialog({ open, onOpenChange, schedule, onDeleted }: {
+  open: boolean; onOpenChange: (v: boolean) => void; schedule: Schedule | null; onDeleted: () => void;
+}) {
+  const remove = useDeleteSchedule();
+  const confirm = () => {
+    if (!schedule) return;
+    remove.mutate(schedule.id, {
+      onSuccess: () => { toast.success("Jadwal dihapus"); onOpenChange(false); onDeleted(); },
+      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+    });
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Hapus Jadwal</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Yakin ingin menghapus <span className="font-semibold text-foreground">{schedule?.title}</span>?
+        </p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
+          <Button variant="destructive" onClick={confirm} disabled={remove.isPending}>
+            {remove.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+            <Trash2 className="mr-1 h-4 w-4" /> Hapus
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Dialog tambah/edit jadwal — kalau `schedule` ada → mode edit (prefill + PATCH) */
+function ScheduleFormDialog({ open, onOpenChange, schedule }: {
+  open: boolean; onOpenChange: (v: boolean) => void; schedule: Schedule | null;
+}) {
+  const [title, setTitle] = useState(schedule?.title ?? "");
+  const [day, setDay] = useState(String(schedule?.day ?? 1));
+  const [time, setTime] = useState(schedule?.time ?? "16:00");
+  const [type, setType] = useState<"training" | "match" | "meeting">(schedule?.type ?? "training");
+  const [venue, setVenue] = useState(schedule?.venue ?? "");
   const create = useCreateSchedule();
+  const update = useUpdateSchedule();
+  const isEdit = !!schedule;
+
+  // sync saat schedule berubah (buka dialog edit untuk item berbeda)
+  const [prevId, setPrevId] = useState<string | null>(null);
+  if (schedule && schedule.id !== prevId) {
+    setPrevId(schedule.id);
+    setTitle(schedule.title);
+    setDay(String(schedule.day));
+    setTime(schedule.time);
+    setType(schedule.type);
+    setVenue(schedule.venue ?? "");
+  } else if (!schedule && prevId !== null) {
+    setPrevId(null);
+    setTitle(""); setDay("1"); setTime("16:00"); setType("training"); setVenue("");
+  }
 
   const submit = () => {
     if (!title.trim()) { toast.error("Judul wajib diisi"); return; }
-    create.mutate({ title: title.trim(), day: Number(day), time, type, venue: venue || null, team: null }, {
-      onSuccess: () => { toast.success("Jadwal ditambahkan"); onOpenChange(false); setTitle(""); setVenue(""); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menambah jadwal"),
-    });
+    const payload = { title: title.trim(), day: Number(day), time, type, venue: venue || null, team: schedule?.team ?? null };
+    if (isEdit) {
+      update.mutate({ id: schedule.id, ...payload }, {
+        onSuccess: () => { toast.success("Jadwal diperbarui"); onOpenChange(false); },
+        onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui"),
+      });
+    } else {
+      create.mutate(payload, {
+        onSuccess: () => { toast.success("Jadwal ditambahkan"); onOpenChange(false); },
+        onError: (e: any) => toast.error(e?.message ?? "Gagal menambah jadwal"),
+      });
+    }
   };
+
+  const busy = create.isPending || update.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Tambah Jadwal Baru</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Edit Jadwal" : "Tambah Jadwal Baru"}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
           <div className="grid gap-2"><Label>Judul</Label><Input placeholder="Mis. Latihan U-12 A" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -168,7 +239,7 @@ function AddScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenChange
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button onClick={submit} disabled={create.isPending}>{create.isPending ? "Menyimpan..." : "Simpan"}</Button>
+          <Button onClick={submit} disabled={busy}>{busy ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Menyimpan...</> : <><Save className="mr-1 h-4 w-4" />{isEdit ? "Simpan Perubahan" : "Simpan"}</>}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

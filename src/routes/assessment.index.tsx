@@ -10,11 +10,11 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { RadarChart } from "@/components/site/RadarChart";
 import { SKILL_CATEGORIES, SKILL_SCALE } from "@/lib/assessment-data";
-import { Save, FileCheck2, Target, Send, Eye, ScanLine } from "lucide-react";
+import { Save, FileCheck2, Target, Send, Eye, ScanLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAthletes, useAssessments, useCreateAssessment, type Assessment } from "@/lib/queries";
+import { useAthletes, useAssessments, useCreateAssessment, useUpdateAssessment, useDeleteAssessment, type Assessment } from "@/lib/queries";
 
-export const Route = createFileRoute("/assessment")({
+export const Route = createFileRoute("/assessment/")({
   head: () => ({ meta: [{ title: "Skill Assessment — SportAcademy" }] }),
   component: AssessmentPage,
 });
@@ -29,6 +29,23 @@ function AssessmentPage() {
   const { data: athletes = [] } = useAthletes();
   const athlete = athletes.find((a) => a.name === "Aldi Setiawan") ?? athletes[0];
   const { data: assessments = [], isLoading, isError } = useAssessments(athlete?.id ?? "");
+  const updateStatus = useUpdateAssessment();
+  const remove = useDeleteAssessment();
+  const navigate = Route.useNavigate();
+
+  const changeStatus = (a: Assessment, status: "Reviewed" | "Published") => {
+    updateStatus.mutate({ id: a.id, status }, {
+      onSuccess: () => toast.success(`${a.athletes?.name ?? "Atlet"} → ${status}`, { description: status === "Published" ? "Visible di Parent Portal" : undefined }),
+      onError: (e: any) => toast.error(e?.message ?? "Gagal ubah status"),
+    });
+  };
+
+  const deleteAssessment = (a: Assessment) => {
+    remove.mutate(a.id, {
+      onSuccess: () => toast.success("Assessment dihapus"),
+      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+    });
+  };
 
   return (
     <DashboardLayout
@@ -70,37 +87,42 @@ function AssessmentPage() {
                   const delta = p.delta ?? 0;
                   return (
                     <div key={p.id} className="rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary-soft text-xs text-primary">{(p.athletes?.name ?? "A").split(" ").map(s=>s[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="truncate text-sm font-semibold">{p.athletes?.name ?? "Atlet"}</p>
-                          <p className="text-xs text-muted-foreground">{p.period}</p>
+                      <Link to="/assessment/$assessmentId" params={{ assessmentId: p.id }} className="block">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary-soft text-xs text-primary">{(p.athletes?.name ?? "A").split(" ").map(s=>s[0]).join("").slice(0,2)}</AvatarFallback></Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-sm font-semibold group-hover:text-primary">{p.athletes?.name ?? "Atlet"}</p>
+                            <p className="text-xs text-muted-foreground">{p.period}</p>
+                          </div>
+                          <Badge variant="secondary" className={STATUS_STYLE[p.status]}>{p.status}</Badge>
                         </div>
-                        <Badge variant="secondary" className={STATUS_STYLE[p.status]}>{p.status}</Badge>
-                      </div>
-                      <div className="mt-3 flex items-end justify-between">
-                        <div>
-                          <p className="text-[10px] uppercase text-muted-foreground">Avg Score</p>
-                          <p className="font-display text-2xl font-bold text-primary">{avg}</p>
+                        <div className="mt-3 flex items-end justify-between">
+                          <div>
+                            <p className="text-[10px] uppercase text-muted-foreground">Avg Score</p>
+                            <p className="font-display text-2xl font-bold text-primary">{avg}</p>
+                          </div>
+                          <span className={`text-xs font-semibold ${delta >= 0 ? "text-primary" : "text-destructive"}`}>
+                            {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} vs prev
+                          </span>
                         </div>
-                        <span className={`text-xs font-semibold ${delta >= 0 ? "text-primary" : "text-destructive"}`}>
-                          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} vs prev
-                        </span>
-                      </div>
+                      </Link>
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {p.status === "Draft" && (
-                          <Button size="sm" variant="secondary" className="text-xs" onClick={() => toast.success(`${p.athletes?.name} → Reviewed`)}>
+                          <Button size="sm" variant="secondary" className="text-xs" onClick={() => changeStatus(p, "Reviewed")}>
                             <Eye className="mr-1 h-3 w-3" />Send for Review
                           </Button>
                         )}
                         {p.status === "Reviewed" && (
-                          <Button size="sm" className="text-xs" onClick={() => toast.success(`${p.athletes?.name} → Published`, { description: "Visible di Parent Portal" })}>
+                          <Button size="sm" className="text-xs" onClick={() => changeStatus(p, "Published")}>
                             <Send className="mr-1 h-3 w-3" />Publish
                           </Button>
                         )}
                         {p.status === "Published" && (
                           <Badge variant="secondary" className="bg-primary-soft text-[10px] text-primary">Visible ke orang tua</Badge>
                         )}
+                        <Button size="sm" variant="ghost" className="ml-auto text-xs text-destructive hover:text-destructive" onClick={() => deleteAssessment(p)}>
+                          <Trash2 className="mr-1 h-3 w-3" />Hapus
+                        </Button>
                       </div>
                     </div>
                   );

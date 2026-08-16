@@ -179,6 +179,40 @@ export function useDrills() {
   });
 }
 
+export function useCreateDrill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<Drill>) => api<{ data: Drill }>("/drills", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["drills"] }),
+  });
+}
+
+export function useUpdateDrill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Drill> & { id: string }) =>
+      api<{ data: Drill }>(`/drills/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["drills"] });
+      qc.invalidateQueries({ queryKey: ["drill"] });
+    },
+  });
+}
+
+export function useDeleteDrill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/drills/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["drills"] }),
+  });
+}
+
 export function useInvoices() {
   return useQuery({
     queryKey: ["invoices"],
@@ -188,11 +222,78 @@ export function useInvoices() {
   });
 }
 
+export function useInvoiceDetail(id: string) {
+  return useQuery({
+    queryKey: ["invoice", id],
+    queryFn: () => apiData<Invoice & { athletes?: { name: string; team: string | null; age_group: string | null }; due_date?: string | null; paid_at?: string | null }>(`/invoices/${id}`),
+    staleTime: 30_000,
+    enabled: !!id,
+  });
+}
+
+export function useUpdateInvoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Invoice> & { id: string }) =>
+      api<{ data: Invoice }>(`/invoices/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      qc.invalidateQueries({ queryKey: ["invoice"] });
+    },
+  });
+}
+
+export function useDeleteInvoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/invoices/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),
+  });
+}
+
 export function useDashboardSummary() {
   return useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: () => apiData<DashboardSummary>("/dashboard/summary"),
     staleTime: 30_000,
+  });
+}
+
+export interface InsightsData {
+  total_athletes: number;
+  avg_progress: number;
+  avg_attendance: number;
+  skill_radar: Record<string, number> | null;
+  pir_trend: { date: string; avg_pir: number }[];
+  athlete_summary: { id: string; name: string; team: string | null; age_group: string | null; progress: number; attendance: number }[];
+}
+
+export function useInsights() {
+  return useQuery({
+    queryKey: ["insights"],
+    queryFn: () => apiData<InsightsData>("/dashboard/insights"),
+    staleTime: 60_000,
+  });
+}
+
+export interface ReportsData {
+  total_athletes: number;
+  active_athletes: number;
+  avg_attendance: number;
+  avg_progress: number;
+  revenue: { total_paid: number; total_invoiced: number; outstanding: number } | null;
+  age_groups: Record<string, number>;
+  top_athletes: { name: string; team: string | null; progress: number }[];
+}
+
+export function useReports() {
+  return useQuery({
+    queryKey: ["reports"],
+    queryFn: () => apiData<ReportsData>("/reports/summary"),
+    staleTime: 60_000,
   });
 }
 
@@ -402,12 +503,53 @@ export function useMatchSummary(athleteId: string) {
   });
 }
 
+export function useMatchDetail(id: string) {
+  return useQuery({
+    queryKey: ["match", id],
+    queryFn: () => apiData<MatchStat & { athletes?: { name: string; team: string | null; age_group: string | null } }>(`/match-stats/${id}`),
+    staleTime: 30_000,
+    enabled: !!id,
+  });
+}
+
+export function useUpdateMatchStat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<MatchStat> & { id: string }) =>
+      api<{ data: MatchStat }>(`/match-stats/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["match-stats"] });
+      qc.invalidateQueries({ queryKey: ["match"] });
+    },
+  });
+}
+
+export function useDeleteMatchStat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/match-stats/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["match-stats"] }),
+  });
+}
+
 export function useAssessments(athleteId: string) {
   return useQuery({
     queryKey: ["assessments", athleteId],
     queryFn: () => apiData<Assessment[]>(`/assessments?athlete_id=${athleteId}`),
     staleTime: 30_000,
     enabled: !!athleteId,
+  });
+}
+
+export function useAssessmentDetail(id: string) {
+  return useQuery({
+    queryKey: ["assessment", id],
+    queryFn: () => apiData<Assessment & { avg?: number; previous_avg?: number; delta?: number }>(`/assessments/${id}`),
+    staleTime: 30_000,
+    enabled: !!id,
   });
 }
 
@@ -445,6 +587,26 @@ export function useCreateSchedule() {
       method: "POST",
       body: JSON.stringify({ academy_id: getAcademyId(), ...input }),
     }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
+  });
+}
+
+export function useUpdateSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Schedule> & { id: string }) =>
+      api<{ data: Schedule }>(`/schedules/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
+  });
+}
+
+export function useDeleteSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/schedules/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
   });
 }
@@ -489,6 +651,29 @@ export function useCreateAssessment() {
   });
 }
 
+export function useUpdateAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Assessment> & { id: string }) =>
+      api<{ data: Assessment }>(`/assessments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assessments"] });
+      qc.invalidateQueries({ queryKey: ["assessment"] });
+    },
+  });
+}
+
+export function useDeleteAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/assessments/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assessments"] }),
+  });
+}
+
 export function useCreateSession() {
   const qc = useQueryClient();
   return useMutation({
@@ -496,6 +681,29 @@ export function useCreateSession() {
       method: "POST",
       body: JSON.stringify(input),
     }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sessions"] }),
+  });
+}
+
+export function useUpdateSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<Session> & { id: string }) =>
+      api<{ data: Session }>(`/sessions/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      qc.invalidateQueries({ queryKey: ["session"] });
+    },
+  });
+}
+
+export function useDeleteSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/sessions/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sessions"] }),
   });
 }

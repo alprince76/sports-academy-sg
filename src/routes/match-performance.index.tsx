@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trophy } from "lucide-react";
 import { useAthletes, useMatchStats } from "@/lib/queries";
 
-export const Route = createFileRoute("/match-performance")({
+export const Route = createFileRoute("/match-performance/")({
   head: () => ({ meta: [{ title: "Match Performance (PIR) — SportAcademy" }] }),
   component: MatchPerformancePage,
 });
@@ -65,8 +65,12 @@ function MatchPerformancePage() {
               </TableHeader>
               <TableBody>
                 {stats.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.opponent ?? "—"}</TableCell>
+                  <TableRow key={s.id} className="cursor-pointer transition-colors hover:bg-secondary/40">
+                    <TableCell className="font-medium">
+                      <Link to="/match-performance/$matchId" params={{ matchId: s.id }} className="block group-hover:text-primary">
+                        {s.opponent ?? "—"}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{s.match_date}</TableCell>
                     <TableCell>{s.min}</TableCell>
                     <TableCell>{s.pts}</TableCell>

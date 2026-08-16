@@ -70,30 +70,32 @@ function DrillsPage() {
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((d) => (
-          <Card key={d.id} className="border-border/70">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <Badge variant="secondary" className="bg-primary-soft text-primary">{d.category}</Badge>
-                <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toast.success("Ditambahkan ke Favorites")}>
-                    <Star className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toast.success("Drill diduplikasi")}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
+          <Link key={d.id} to="/drills/$drillId" params={{ drillId: d.id }} className="group">
+            <Card className="h-full border-border/70 transition-all group-hover:-translate-y-0.5 group-hover:border-primary/40 group-hover:shadow-elevated">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <Badge variant="secondary" className="bg-primary-soft text-primary">{d.category}</Badge>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.preventDefault(); toast.success("Ditambahkan ke Favorites"); }}>
+                      <Star className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.preventDefault(); toast.success("Drill diduplikasi"); }}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <h3 className="mt-3 font-display text-base font-semibold leading-tight">{d.title}</h3>
-              {d.focus && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{d.focus}</p>}
+                <h3 className="mt-3 font-display text-base font-semibold leading-tight group-hover:text-primary">{d.title}</h3>
+                {d.focus && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{d.focus}</p>}
 
-              <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
-                <Badge variant="secondary" className={DIFF_COLOR[d.difficulty]}>{d.difficulty}</Badge>
-                <Badge variant="secondary" className={`gap-1 ${INTENSITY_COLOR[d.intensity]}`}><Zap className="h-3 w-3" />{d.intensity}</Badge>
-                <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />{d.duration}m</Badge>
-                {d.equipment && <Badge variant="secondary" className="gap-1"><Dumbbell className="h-3 w-3" />{d.equipment}</Badge>}
-              </div>
-            </CardContent>
-          </Card>
+                <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
+                  <Badge variant="secondary" className={DIFF_COLOR[d.difficulty]}>{d.difficulty}</Badge>
+                  <Badge variant="secondary" className={`gap-1 ${INTENSITY_COLOR[d.intensity]}`}><Zap className="h-3 w-3" />{d.intensity}</Badge>
+                  <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />{d.duration}m</Badge>
+                  {d.equipment && <Badge variant="secondary" className="gap-1"><Dumbbell className="h-3 w-3" />{d.equipment}</Badge>}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
         {filtered.length === 0 && !isLoading && !isError && (
           <Card className="col-span-full border-dashed">
