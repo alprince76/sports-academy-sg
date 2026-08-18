@@ -9,10 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, Info, Target, Settings2, ClipboardList, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import type { Program } from "@/lib/queries";
-import { useTeams, useCoaches } from "@/lib/queries";
+import { useTeams, getAcademyId } from "@/lib/queries";
+import { apiData } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 export const FOCUS_OPTIONS = ["Fundamental", "Shooting", "Defense", "Ball Handling", "Conditioning", "Tactical"];
 export const SKILL_OPTIONS = ["Shooting", "Ball Handling", "Defense", "Teamwork", "Basketball IQ", "Athleticism"];
+
+/** Daftar user ber-role coach (untuk dropdown Head/Assistant Coach). */
+function useCoachUsers() {
+  return useQuery({
+    queryKey: ["coach-users"],
+    queryFn: () => apiData<{ id: string; name: string }[]>(`/auth/coach-users?academy_id=${getAcademyId()}`),
+    staleTime: 60_000,
+    enabled: !!getAcademyId(),
+  });
+}
 
 export interface ProgramFormValues {
   name: string;
@@ -98,7 +110,7 @@ export function formToPayload(f: ProgramFormValues, academyId: string) {
     team: f.team && f.team !== "__none" ? f.team : null,
     season: f.season || null,
     head_coach: f.coach && f.coach !== "__none" ? f.coach : null,
-    assistant_coach: f.assistant || null,
+    assistant_coach: f.assistant && f.assistant !== "__none" ? f.assistant : null,
     start_date: f.startDate || null,
     end_date: f.endDate || null,
     primary_objective: f.primaryObj || null,
@@ -135,7 +147,7 @@ export function ProgramForm({
   const [form, setForm] = useState<ProgramFormValues>(initial);
   const [saving, setSaving] = useState(false);
   const { data: teams = [] } = useTeams();
-  const { data: coaches = [] } = useCoaches();
+  const { data: coachUsers = [] } = useCoachUsers();
   const set = (k: keyof ProgramFormValues, v: string | string[]) => setForm({ ...form, [k]: v as never });
   const toggle = (arr: string[], v: string) => arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
@@ -177,11 +189,19 @@ export function ProgramForm({
               <SelectTrigger><SelectValue placeholder="Pilih coach" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none">— Tanpa coach —</SelectItem>
-                {coaches.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                {coachUsers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </F>
-          <F label="Assistant Coach"><Input value={form.assistant} onChange={(e) => set("assistant", e.target.value)} placeholder="Opsional" /></F>
+          <F label="Assistant Coach">
+            <Select value={form.assistant} onValueChange={(v) => set("assistant", v)}>
+              <SelectTrigger><SelectValue placeholder="Pilih coach (opsional)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">— Tanpa coach —</SelectItem>
+                {coachUsers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </F>
           <F label="Start Date"><Input type="date" value={form.startDate} onChange={(e) => set("startDate", e.target.value)} /></F>
           <F label="End Date"><Input type="date" value={form.endDate} onChange={(e) => set("endDate", e.target.value)} /></F>
         </div>
