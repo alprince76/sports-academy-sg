@@ -59,6 +59,7 @@ export interface Program {
   instructions: string | null;
   medical: string | null;
   notes: string | null;
+  athlete_count?: number;
 }
 
 export interface Drill {
@@ -482,6 +483,8 @@ export interface Session {
   program_id: string | null;
   title: string;
   session_date: string;
+  start_time: string | null;
+  end_time: string | null;
   focus: string | null;
   blocks: Record<string, unknown>[];
   programs?: { title: string } | null;

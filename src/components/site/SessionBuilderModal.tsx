@@ -48,6 +48,8 @@ export function SessionBuilderModal({
 
   const [blocks, setBlocks] = useState<Record<BlockId, string[]>>(DEFAULT_BLOCKS());
   const [sessionTitle, setSessionTitle] = useState("");
+  const [startTime, setStartTime] = useState("16:00");
+  const [endTime, setEndTime] = useState("17:30");
   const [saving, setSaving] = useState(false);
 
   // reset saat dibuka
@@ -96,6 +98,8 @@ export function SessionBuilderModal({
       program_id: programId,
       title: sessionTitle.trim() || `Sesi ${programTitle ?? ""}`.trim(),
       session_date: new Date().toISOString().slice(0, 10),
+      start_time: startTime || null,
+      end_time: endTime || null,
       focus: totalDrills ? (drillById((blocks[BLOCK_ORDER[1]] ?? [])[0] ?? "")?.category ?? null) : null,
       blocks: validBlocks,
     } as any, {
@@ -128,6 +132,11 @@ export function SessionBuilderModal({
             placeholder="Judul sesi (mis. Latihan Fokus Dribbling)"
             className="max-w-md"
           />
+          <div className="flex items-center gap-1.5 text-sm">
+            <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-24" />
+            <span className="text-muted-foreground">–</span>
+            <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="w-24" />
+          </div>
           <Badge variant="secondary" className="ml-auto"><Clock className="mr-1 h-3 w-3" />{total} min · {totalDrills} drill</Badge>
         </div>
 
