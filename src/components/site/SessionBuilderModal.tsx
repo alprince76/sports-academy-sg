@@ -70,12 +70,32 @@ export function SessionBuilderModal({
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over) return;
-    const drillId = String(active?.id);
-    const block = over.id as BlockId;
-    if (!BLOCK_ORDER.includes(block)) return;
-    if ((blocks[block] ?? []).includes(drillId)) { toast.info("Drill sudah ada di blok ini"); return; }
-    setBlocks((prev) => ({ ...prev, [block]: [...(prev[block] ?? []), drillId] }));
-    toast.success(`Drill ditambahkan ke ${block}`);
+    const targetBlock = over.id as BlockId;
+    if (!BLOCK_ORDER.includes(targetBlock)) return;
+
+    const src = String(active?.id);
+    // Format id: "drill:<block>:<drillId>" (drill di dalam blok) atau "lib:<drillId>" (dari library)
+    const srcIsInBlock = src.startsWith("drill:");
+    const [_, ...restParts] = src.includes(":") ? src.split(":") : ["", src];
+    const drillId = String(restParts.join(":"));
+
+    if (srcIsInBlock) {
+      // Draggable dari dalam blok → pindah antar kategori
+      const sourceBlock = src.split(":")[1] as BlockId;
+      if (sourceBlock === targetBlock) return; // sudah di blok itu
+      if ((blocks[targetBlock] ?? []).includes(drillId)) { toast.info("Drill sudah ada di blok ini"); return; }
+      setBlocks((prev) => ({
+        ...prev,
+        [sourceBlock]: (prev[sourceBlock] ?? []).filter((x) => x !== drillId),
+        [targetBlock]: [...(prev[targetBlock] ?? []), drillId],
+      }));
+      toast.success(`Drill dipindah ke ${targetBlock}`);
+    } else {
+      // Dari library → tambah ke blok
+      if ((blocks[targetBlock] ?? []).includes(drillId)) { toast.info("Drill sudah ada di blok ini"); return; }
+      setBlocks((prev) => ({ ...prev, [targetBlock]: [...(prev[targetBlock] ?? []), drillId] }));
+      toast.success(`Drill ditambahkan ke ${targetBlock}`);
+    }
   };
 
   const addByCategory = (category: string, id: string) => {
@@ -164,19 +184,21 @@ export function SessionBuilderModal({
                           const d = drillById(did);
                           if (!d) return null;
                           return (
-                            <div key={did} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                              <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              <div className="flex-1 min-w-0">
-                                <p className="truncate text-sm font-semibold">{d.title}</p>
-                                <p className="text-xs text-muted-foreground">{d.focus ?? d.category} · {d.difficulty} · {d.duration} min</p>
+                            <DraggableDrill key={did} id={`drill:${cat}:${did}`}>
+                              <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                                <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="truncate text-sm font-semibold">{d.title}</p>
+                                  <p className="text-xs text-muted-foreground">{d.focus ?? d.category} · {d.difficulty} · {d.duration} min</p>
+                                </div>
+                                <Button size="icon" variant="ghost" onClick={() => removeDrill(cat, did)}><X className="h-4 w-4" /></Button>
                               </div>
-                              <Button size="icon" variant="ghost" onClick={() => removeDrill(cat, did)}><X className="h-4 w-4" /></Button>
-                            </div>
+                            </DraggableDrill>
                           );
                         })}
                         {items.length === 0 && (
                           <p className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                            Drag drill ke sini (atau klik + di library).
+                            Drag drill antar kategori, atau klik + di library.
                           </p>
                         )}
                       </div>
@@ -194,7 +216,7 @@ export function SessionBuilderModal({
               <p className="text-xs text-muted-foreground">Drag ke blok, atau klik +.</p>
               <div className="mt-3 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
                 {drills.map((d) => (
-                  <DraggableDrill key={d.id} id={d.id}>
+                  <DraggableDrill key={d.id} id={d.id} className="rounded-lg border border-border p-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-xs font-semibold">{d.title}</p>
@@ -242,15 +264,15 @@ function DroppableBlock({ id, children }: { id: BlockId; children: React.ReactNo
   );
 }
 
-/** Item drill yang bisa diseret */
-function DraggableDrill({ id, children }: { id: string; children: React.ReactNode }) {
+/** Item drill yang bisa diseret — wrapper minimal (drag listeners); styling di call-site. */
+function DraggableDrill({ id, children, className = "" }: { id: string; children: React.ReactNode; className?: string }) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id });
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`cursor-grab rounded-lg border border-border p-2.5 active:cursor-grabbing ${isDragging ? "opacity-40" : ""}`}
+      className={`cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40" : ""} ${className}`}
     >
       {children}
     </div>
