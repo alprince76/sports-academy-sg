@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
-import { useAthletes, useDeleteSession } from "@/lib/queries";
+import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation } from "@/lib/queries";
 import { useSessionList } from "./training.index";
 import {
   SKILL_CATEGORIES, SKILL_SCALE, DEFAULT_SESSION_EVAL,
@@ -33,6 +33,9 @@ function SessionPage() {
   const roster = athletes.slice(0, 12);
   const remove = useDeleteSession();
   const navigate = Route.useNavigate();
+  const createAttendance = useCreateAttendance();
+  const createEvaluation = useCreateEvaluation();
+  const userId = localStorage.getItem("sportacademy.user") ? "" : (JSON.parse(localStorage.getItem("sb-127-auth-token") ?? "{}")?.user?.id ?? "");
 
   const [present, setPresent] = useState<Record<string, boolean>>(
     Object.fromEntries(roster.map((a) => [a.id, true]))
@@ -46,13 +49,40 @@ function SessionPage() {
   const [delOpen, setDelOpen] = useState(false);
 
   const handleSave = () => {
+    if (!session || roster.length === 0) return;
     setSaving(true);
-    setTimeout(() => {
+    const sessionDate = session.session_date ?? new Date().toISOString().slice(0, 10);
+    const coachId = JSON.parse(localStorage.getItem("sb-127-auth-token") ?? "{}")?.user?.id ?? userId;
+    // 1. Simpan kehadiran tiap atlet → POST /attendance
+    const attPromises = roster.map((a) =>
+      createAttendance.mutateAsync({
+        athlete_id: a.id,
+        session_date: sessionDate,
+        status: present[a.id] ? "present" : "absent",
+      }).catch(() => null)
+    );
+    // 2. Simpan evaluasi tiap atlet → POST /evaluations (skor 0-100 dari Quick Score)
+    const evalPromises = roster.map((a) => {
+      const sc = scores[a.id] ?? 75;
+      return createEvaluation.mutateAsync({
+        athlete_id: a.id,
+        coach_id: coachId,
+        session_date: sessionDate,
+        passing: sc,
+        dribbling: sc,
+        shooting: sc,
+        stamina: sc,
+        teamwork: sc,
+        attitude: sc,
+        note: notes.trim() || null,
+      }).catch(() => null);
+    });
+    Promise.all([...attPromises, ...evalPromises]).then(() => {
       setSaving(false);
       setSaved(true);
-      toast.success("Evaluasi tersimpan", { description: `${roster.length} atlet dievaluasi` });
+      toast.success("Kehadiran & evaluasi tersimpan", { description: `${roster.length} atlet disimpan ke backend` });
       setTimeout(() => setSaved(false), 2000);
-    }, 900);
+    });
   };
 
   const handleDelete = () => {

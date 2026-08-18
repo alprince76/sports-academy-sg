@@ -616,7 +616,28 @@ export function useCreateProgress() {
   return useMutation({
     mutationFn: (input: { athlete_id: string; overall: number; skills?: Record<string, number>; note?: string }) =>
       api<{ data: ProgressPoint }>("/progress", { method: "POST", body: JSON.stringify(input) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["progress"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["progress"] });
+      qc.invalidateQueries({ queryKey: ["insights"] });
+    },
+  });
+}
+
+export function useCreateAttendance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { athlete_id: string; session_date: string; status: "present" | "absent" | "late" | "excused"; note?: string | null }) =>
+      api<{ data: any }>("/attendance", { method: "POST", body: JSON.stringify(input) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["attendance"] }),
+  });
+}
+
+export function useCreateEvaluation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { athlete_id: string; coach_id: string; session_date?: string; passing: number; dribbling: number; shooting: number; stamina: number; teamwork: number; attitude: number; note?: string | null }) =>
+      api<{ data: any }>("/evaluations", { method: "POST", body: JSON.stringify(input) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["evaluations"] }),
   });
 }
 
