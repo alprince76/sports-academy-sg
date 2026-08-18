@@ -9,6 +9,7 @@ export interface Athlete {
   age_group: string | null;
   position: string | null;
   team: string | null;
+  team_id: string | null;
   progress: number;
   attendance: number;
   status: "Great" | "Good" | "Needs Focus";
@@ -76,6 +77,18 @@ export interface Drill {
   common_mistakes: string | null;
   safety: string | null;
   tags: string | null;
+}
+
+export interface Team {
+  id: string;
+  academy_id: string;
+  name: string;
+  age_group: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  athlete_count?: number;
+  members?: Array<{ id: string; name: string; position: string | null; age_group: string | null }>;
 }
 
 export interface Invoice {
@@ -217,6 +230,47 @@ export function useDeleteDrill() {
   return useMutation({
     mutationFn: (id: string) => api<{ ok: boolean }>(`/drills/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["drills"] }),
+  });
+}
+
+export function useTeams() {
+  return useQuery({
+    queryKey: ["teams"],
+    queryFn: () => apiData<Team[]>(`/teams?academy_id=${getAcademyId()}`),
+    staleTime: 30_000,
+    enabled: !!getAcademyId(),
+  });
+}
+
+export function useCreateTeam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; age_group?: string | null; description?: string | null }) =>
+      api<{ data: Team }>(`/teams?academy_id=${getAcademyId()}`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["teams"] }),
+  });
+}
+
+export function useUpdateTeam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: { id: string; name?: string; age_group?: string | null; description?: string | null }) =>
+      api<{ data: Team }>(`/teams/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["teams"] }),
+  });
+}
+
+export function useDeleteTeam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean }>(`/teams/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["teams"] }),
   });
 }
 

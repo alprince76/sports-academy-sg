@@ -5,7 +5,7 @@ import {
   Activity, CalendarCheck, ChartLine, CreditCard, Home, LogOut, Settings, Trophy,
   UsersRound, Menu, Bell, Search, Megaphone, Building2, ClipboardList,
   Sparkles, Heart, MessageSquare, TrendingUp, Wallet, Target, BarChart3,
-  BookOpen, LayoutTemplate, Dumbbell, Award, ScanLine, ShieldCheck, UserCog,
+  BookOpen, LayoutTemplate, Dumbbell, Award, ScanLine, ShieldCheck, Shield, UserCog,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: UsersRound, label: "Athletes", to: "/athletes" },
     { icon: Megaphone, label: "Coaches", to: "/coaches" },
     { icon: BookOpen, label: "Training Programs", to: "/programs" },
-    { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
+    { icon: Shield, label: "Tim", to: "/teams" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
@@ -49,7 +49,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: UsersRound, label: "Athletes Overview", to: "/athletes" },
     { icon: Megaphone, label: "Coaches", to: "/coaches" },
     { icon: BookOpen, label: "Training Programs", to: "/programs" },
-    { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
+    { icon: Shield, label: "Tim", to: "/teams" },
     { icon: Wallet, label: "Revenue", to: "/revenue" },
     { icon: ChartLine, label: "Reports", to: "/reports" },
     { icon: Settings, label: "Settings", to: "/settings" },
@@ -58,7 +58,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: Home, label: "Dashboard", to: "/dashboard" },
     { icon: UsersRound, label: "Athletes", to: "/athletes" },
     { icon: BookOpen, label: "Training Programs", to: "/programs" },
-    { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
+    { icon: Shield, label: "Tim", to: "/teams" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
@@ -73,7 +73,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   coach: [
     { icon: Home, label: "Dashboard", to: "/dashboard" },
     { icon: BookOpen, label: "Training Programs", to: "/programs" },
-    { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
+    { icon: Shield, label: "Tim", to: "/teams" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
@@ -97,7 +97,7 @@ const ICON_MAP: Record<string, typeof Home> = {
   Home, UsersRound, Megaphone, BookOpen, Wallet, ChartLine, Settings,
   LayoutTemplate, Dumbbell, Activity, Target, ScanLine, Award, BarChart3,
   CreditCard, CalendarCheck, TrendingUp, ClipboardList, MessageSquare,
-  ShieldCheck, UserCog,
+  ShieldCheck, Shield, UserCog,
 };
 
 interface MenuApiItem { label: string; icon: string; to: string; permission: string | null }

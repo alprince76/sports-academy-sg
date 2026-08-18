@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Save, X, Plus, Clock, Loader2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
 import { BLOCK_META } from "@/lib/training-data";
 import { useDrills, useCreateSession } from "@/lib/queries";
 
@@ -48,7 +49,6 @@ export function SessionBuilderModal({
   const [blocks, setBlocks] = useState<Record<BlockId, string[]>>(DEFAULT_BLOCKS());
   const [sessionTitle, setSessionTitle] = useState("");
   const [saving, setSaving] = useState(false);
-  const [dragOver, setDragOver] = useState<BlockId | null>(null);
 
   // reset saat dibuka
   if (open && sessionTitle === "" && Object.values(blocks).every((b) => b.length === 0)) {
@@ -65,21 +65,17 @@ export function SessionBuilderModal({
     setSessionTitle("");
   };
 
-  const handleDrillDragStart = (e: React.DragEvent, drillId: string) => {
-    e.dataTransfer.setData("text/drill-id", drillId);
-    e.dataTransfer.effectAllowed = "copy";
-  };
-  const handleBlockDrop = (e: React.DragEvent, block: BlockId) => {
-    e.preventDefault();
-    setDragOver(null);
-    const id = e.dataTransfer.getData("text/drill-id");
-    if (!id) return;
-    if ((blocks[block] ?? []).includes(id)) { toast.info("Drill sudah ada di blok ini"); return; }
-    setBlocks((prev) => ({ ...prev, [block]: [...(prev[block] ?? []), id] }));
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const drillId = String(active?.id);
+    const block = over.id as BlockId;
+    if (!BLOCK_ORDER.includes(block)) return;
+    if ((blocks[block] ?? []).includes(drillId)) { toast.info("Drill sudah ada di blok ini"); return; }
+    setBlocks((prev) => ({ ...prev, [block]: [...(prev[block] ?? []), drillId] }));
     toast.success(`Drill ditambahkan ke ${block}`);
   };
-  const handleBlockDragOver = (e: React.DragEvent, block: BlockId) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setDragOver(block); };
-  const handleBlockDragLeave = () => setDragOver(null);
+
   const addByCategory = (category: string, id: string) => {
     const block = CATEGORY_TO_BLOCK[category] ?? "Fundamental";
     if ((blocks[block] ?? []).includes(id)) { toast.info("Drill sudah ada di blok ini"); return; }
@@ -136,6 +132,7 @@ export function SessionBuilderModal({
         </div>
 
         <div className="grid gap-4 overflow-y-auto p-6 lg:grid-cols-[1fr_280px]">
+          <DndContext onDragEnd={handleDragEnd}>
           {/* Blocks */}
           <div className="space-y-3">
             {BLOCK_ORDER.map((cat) => {
@@ -143,13 +140,7 @@ export function SessionBuilderModal({
               const items = blocks[cat] ?? [];
               const mins = blockMinutes(cat);
               return (
-                <div
-                  key={cat}
-                  onDragOver={(e) => handleBlockDragOver(e, cat)}
-                  onDragLeave={handleBlockDragLeave}
-                  onDrop={(e) => handleBlockDrop(e, cat)}
-                  className={`rounded-xl transition ${dragOver === cat ? "ring-2 ring-primary/50 ring-offset-2" : ""}`}
-                >
+                <DroppableBlock key={cat} id={cat}>
                   <Card className="border-border/70">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -165,7 +156,7 @@ export function SessionBuilderModal({
                           if (!d) return null;
                           return (
                             <div key={did} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                              <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
                               <div className="flex-1 min-w-0">
                                 <p className="truncate text-sm font-semibold">{d.title}</p>
                                 <p className="text-xs text-muted-foreground">{d.focus ?? d.category} · {d.difficulty} · {d.duration} min</p>
@@ -182,7 +173,7 @@ export function SessionBuilderModal({
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </DroppableBlock>
               );
             })}
           </div>
@@ -194,12 +185,7 @@ export function SessionBuilderModal({
               <p className="text-xs text-muted-foreground">Drag ke blok, atau klik +.</p>
               <div className="mt-3 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
                 {drills.map((d) => (
-                  <div
-                    key={d.id}
-                    draggable
-                    onDragStart={(e) => handleDrillDragStart(e, d.id)}
-                    className="cursor-grab rounded-lg border border-border p-2.5 active:cursor-grabbing"
-                  >
+                  <DraggableDrill key={d.id} id={d.id}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-xs font-semibold">{d.title}</p>
@@ -210,7 +196,7 @@ export function SessionBuilderModal({
                       </Button>
                     </div>
                     <Badge variant="secondary" className={`mt-1.5 text-[10px] ${BLOCK_META[CATEGORY_TO_BLOCK[d.category] ?? "Fundamental"]?.color ?? "bg-secondary"}`}>{d.category}</Badge>
-                  </div>
+                  </DraggableDrill>
                 ))}
                 {drills.length === 0 && (
                   <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">Belum ada drill.</p>
@@ -218,6 +204,7 @@ export function SessionBuilderModal({
               </div>
             </CardContent>
           </Card>
+          </DndContext>
         </div>
 
         <DialogFooter className="px-6 py-4 border-t gap-2">
@@ -230,5 +217,33 @@ export function SessionBuilderModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Blok yang menerima drag (drop target) */
+function DroppableBlock({ id, children }: { id: BlockId; children: React.ReactNode }) {
+  const { setNodeRef, isOver: over } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-xl transition ${over ? "ring-2 ring-primary/50 ring-offset-2" : ""}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Item drill yang bisa diseret */
+function DraggableDrill({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`cursor-grab rounded-lg border border-border p-2.5 active:cursor-grabbing ${isDragging ? "opacity-40" : ""}`}
+    >
+      {children}
+    </div>
   );
 }

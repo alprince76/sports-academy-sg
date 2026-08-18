@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAthletes, useCreateAthlete, useUpdateAthlete, useDeleteAthlete, type Athlete } from "@/lib/queries";
+import { useAthletes, useCreateAthlete, useUpdateAthlete, useDeleteAthlete, useTeams, type Athlete } from "@/lib/queries";
 import { TEAMS, POSITIONS } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/athletes/")({
@@ -152,13 +152,15 @@ function AddAthleteDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [position, setPosition] = useState("");
-  const [team, setTeam] = useState("");
+  const [teamId, setTeamId] = useState("");
+  const { data: teams = [] } = useTeams();
   const create = useCreateAthlete();
 
   const submit = () => {
     if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
-    create.mutate({ name: name.trim(), position: position || null, team: team || null }, {
-      onSuccess: () => { toast.success("Atlet berhasil ditambahkan"); setOpen(false); setName(""); setPosition(""); setTeam(""); },
+    const t = teams.find((x) => x.id === teamId);
+    create.mutate({ name: name.trim(), position: position || null, team: t?.name ?? null, team_id: teamId || null }, {
+      onSuccess: () => { toast.success("Atlet berhasil ditambahkan"); setOpen(false); setName(""); setPosition(""); setTeamId(""); },
       onError: (e: any) => toast.error(e?.message ?? "Gagal menambah atlet"),
     });
   };
@@ -182,9 +184,12 @@ function AddAthleteDialog() {
             </div>
             <div className="grid gap-2">
               <Label>Tim</Label>
-              <Select value={team} onValueChange={setTeam}>
+              <Select value={teamId} onValueChange={setTeamId}>
                 <SelectTrigger><SelectValue placeholder="Pilih tim" /></SelectTrigger>
-                <SelectContent>{TEAMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {teams.length === 0 && <SelectItem value="__none">Belum ada tim</SelectItem>}
+                  {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
           </div>
@@ -201,7 +206,8 @@ function AddAthleteDialog() {
 function EditAthleteDialog({ athlete, onClose }: { athlete: Athlete | null; onClose: () => void }) {
   const [name, setName] = useState(athlete?.name ?? "");
   const [position, setPosition] = useState(athlete?.position ?? "");
-  const [team, setTeam] = useState(athlete?.team ?? "");
+  const [teamId, setTeamId] = useState(athlete?.team_id ?? "");
+  const { data: teams = [] } = useTeams();
   const update = useUpdateAthlete();
 
   // sync state saat athlete berubah (dialog dibuka dengan data berbeda)
@@ -210,13 +216,14 @@ function EditAthleteDialog({ athlete, onClose }: { athlete: Athlete | null; onCl
     setLastId(athlete.id);
     setName(athlete.name);
     setPosition(athlete.position ?? "");
-    setTeam(athlete.team ?? "");
+    setTeamId(athlete.team_id ?? "");
   }
 
   const submit = () => {
     if (!athlete) return;
     if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
-    update.mutate({ id: athlete.id, name: name.trim(), position: position || null, team: team || null }, {
+    const t = teams.find((x) => x.id === teamId);
+    update.mutate({ id: athlete.id, name: name.trim(), position: position || null, team: t?.name ?? null, team_id: teamId || null }, {
       onSuccess: () => { toast.success("Atlet berhasil diperbarui"); onClose(); },
       onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui atlet"),
     });
@@ -238,9 +245,12 @@ function EditAthleteDialog({ athlete, onClose }: { athlete: Athlete | null; onCl
             </div>
             <div className="grid gap-2">
               <Label>Tim</Label>
-              <Select value={team} onValueChange={setTeam}>
+              <Select value={teamId} onValueChange={setTeamId}>
                 <SelectTrigger><SelectValue placeholder="Pilih tim" /></SelectTrigger>
-                <SelectContent>{TEAMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {teams.length === 0 && <SelectItem value="__none">Belum ada tim</SelectItem>}
+                  {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
           </div>

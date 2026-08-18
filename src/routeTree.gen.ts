@@ -10,8 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UserManagementRouteImport } from './routes/user-management'
+import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SessionBuilderRouteImport } from './routes/session-builder'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as RoleManagementRouteImport } from './routes/role-management'
 import { Route as RevenueRouteImport } from './routes/revenue'
@@ -52,14 +52,14 @@ const UserManagementRoute = UserManagementRouteImport.update({
   path: '/user-management',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SessionBuilderRoute = SessionBuilderRouteImport.update({
-  id: '/session-builder',
-  path: '/session-builder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScheduleRoute = ScheduleRouteImport.update({
@@ -248,8 +248,8 @@ export interface FileRoutesByFullPath {
   '/revenue': typeof RevenueRoute
   '/role-management': typeof RoleManagementRoute
   '/schedule': typeof ScheduleRoute
-  '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
+  '/teams': typeof TeamsRoute
   '/user-management': typeof UserManagementRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
   '/assessment/import': typeof AssessmentImportRoute
@@ -287,8 +287,8 @@ export interface FileRoutesByTo {
   '/revenue': typeof RevenueRoute
   '/role-management': typeof RoleManagementRoute
   '/schedule': typeof ScheduleRoute
-  '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
+  '/teams': typeof TeamsRoute
   '/user-management': typeof UserManagementRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
   '/assessment/import': typeof AssessmentImportRoute
@@ -327,8 +327,8 @@ export interface FileRoutesById {
   '/revenue': typeof RevenueRoute
   '/role-management': typeof RoleManagementRoute
   '/schedule': typeof ScheduleRoute
-  '/session-builder': typeof SessionBuilderRoute
   '/settings': typeof SettingsRoute
+  '/teams': typeof TeamsRoute
   '/user-management': typeof UserManagementRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
   '/assessment/import': typeof AssessmentImportRoute
@@ -368,8 +368,8 @@ export interface FileRouteTypes {
     | '/revenue'
     | '/role-management'
     | '/schedule'
-    | '/session-builder'
     | '/settings'
+    | '/teams'
     | '/user-management'
     | '/assessment/$assessmentId'
     | '/assessment/import'
@@ -407,8 +407,8 @@ export interface FileRouteTypes {
     | '/revenue'
     | '/role-management'
     | '/schedule'
-    | '/session-builder'
     | '/settings'
+    | '/teams'
     | '/user-management'
     | '/assessment/$assessmentId'
     | '/assessment/import'
@@ -446,8 +446,8 @@ export interface FileRouteTypes {
     | '/revenue'
     | '/role-management'
     | '/schedule'
-    | '/session-builder'
     | '/settings'
+    | '/teams'
     | '/user-management'
     | '/assessment/$assessmentId'
     | '/assessment/import'
@@ -486,8 +486,8 @@ export interface RootRouteChildren {
   RevenueRoute: typeof RevenueRoute
   RoleManagementRoute: typeof RoleManagementRoute
   ScheduleRoute: typeof ScheduleRoute
-  SessionBuilderRoute: typeof SessionBuilderRoute
   SettingsRoute: typeof SettingsRoute
+  TeamsRoute: typeof TeamsRoute
   UserManagementRoute: typeof UserManagementRoute
   AssessmentAssessmentIdRoute: typeof AssessmentAssessmentIdRoute
   AssessmentImportRoute: typeof AssessmentImportRoute
@@ -519,18 +519,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserManagementRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/session-builder': {
-      id: '/session-builder'
-      path: '/session-builder'
-      fullPath: '/session-builder'
-      preLoaderRoute: typeof SessionBuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedule': {
@@ -800,8 +800,8 @@ const rootRouteChildren: RootRouteChildren = {
   RevenueRoute: RevenueRoute,
   RoleManagementRoute: RoleManagementRoute,
   ScheduleRoute: ScheduleRoute,
-  SessionBuilderRoute: SessionBuilderRoute,
   SettingsRoute: SettingsRoute,
+  TeamsRoute: TeamsRoute,
   UserManagementRoute: UserManagementRoute,
   AssessmentAssessmentIdRoute: AssessmentAssessmentIdRoute,
   AssessmentImportRoute: AssessmentImportRoute,
