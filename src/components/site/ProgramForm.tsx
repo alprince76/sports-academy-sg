@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, Info, Target, Settings2, ClipboardList, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import type { Program } from "@/lib/queries";
+import { useTeams, useCoaches } from "@/lib/queries";
 
 export const FOCUS_OPTIONS = ["Fundamental", "Shooting", "Defense", "Ball Handling", "Conditioning", "Tactical"];
 export const SKILL_OPTIONS = ["Shooting", "Ball Handling", "Defense", "Teamwork", "Basketball IQ", "Athleticism"];
@@ -94,9 +95,9 @@ export function formToPayload(f: ProgramFormValues, academyId: string) {
     sessions_per_week: Number(f.sessionsPerWeek) || 3,
     active: true,
     age_group: f.ageGroup || null,
-    team: f.team || null,
+    team: f.team && f.team !== "__none" ? f.team : null,
     season: f.season || null,
-    head_coach: f.coach || null,
+    head_coach: f.coach && f.coach !== "__none" ? f.coach : null,
     assistant_coach: f.assistant || null,
     start_date: f.startDate || null,
     end_date: f.endDate || null,
@@ -133,6 +134,8 @@ export function ProgramForm({
 }) {
   const [form, setForm] = useState<ProgramFormValues>(initial);
   const [saving, setSaving] = useState(false);
+  const { data: teams = [] } = useTeams();
+  const { data: coaches = [] } = useCoaches();
   const set = (k: keyof ProgramFormValues, v: string | string[]) => setForm({ ...form, [k]: v as never });
   const toggle = (arr: string[], v: string) => arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
@@ -159,9 +162,25 @@ export function ProgramForm({
             </Select>
           </F>
           <F wide label="Program Description"><Textarea value={form.description} onChange={(e) => set("description", e.target.value)} className="min-h-20" placeholder="Ringkasan program, filosofi, pendekatan pelatihan..." /></F>
-          <F label="Team"><Input value={form.team} onChange={(e) => set("team", e.target.value)} /></F>
+          <F label="Team">
+            <Select value={form.team} onValueChange={(v) => set("team", v)}>
+              <SelectTrigger><SelectValue placeholder="Pilih tim" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">— Tanpa tim —</SelectItem>
+                {teams.map((t) => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </F>
           <F label="Season"><Input value={form.season} onChange={(e) => set("season", e.target.value)} /></F>
-          <F label="Head Coach"><Input value={form.coach} onChange={(e) => set("coach", e.target.value)} /></F>
+          <F label="Head Coach">
+            <Select value={form.coach} onValueChange={(v) => set("coach", v)}>
+              <SelectTrigger><SelectValue placeholder="Pilih coach" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">— Tanpa coach —</SelectItem>
+                {coaches.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </F>
           <F label="Assistant Coach"><Input value={form.assistant} onChange={(e) => set("assistant", e.target.value)} placeholder="Opsional" /></F>
           <F label="Start Date"><Input type="date" value={form.startDate} onChange={(e) => set("startDate", e.target.value)} /></F>
           <F label="End Date"><Input type="date" value={form.endDate} onChange={(e) => set("endDate", e.target.value)} /></F>
