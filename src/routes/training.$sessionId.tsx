@@ -14,6 +14,7 @@ import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, 
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
 import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation } from "@/lib/queries";
+import { getUserIdFromSession } from "@/lib/api";
 import { useSessionList } from "./training.index";
 import {
   SKILL_CATEGORIES, SKILL_SCALE, DEFAULT_SESSION_EVAL,
@@ -35,7 +36,7 @@ function SessionPage() {
   const navigate = Route.useNavigate();
   const createAttendance = useCreateAttendance();
   const createEvaluation = useCreateEvaluation();
-  const userId = localStorage.getItem("sportacademy.user") ? "" : (JSON.parse(localStorage.getItem("sb-127-auth-token") ?? "{}")?.user?.id ?? "");
+  const userId = localStorage.getItem("sportacademy.user") ? "" : (getUserIdFromSession() ?? "");
 
   const [present, setPresent] = useState<Record<string, boolean>>(
     Object.fromEntries(roster.map((a) => [a.id, true]))
@@ -52,7 +53,7 @@ function SessionPage() {
     if (!session || roster.length === 0) return;
     setSaving(true);
     const sessionDate = session.session_date ?? new Date().toISOString().slice(0, 10);
-    const coachId = JSON.parse(localStorage.getItem("sb-127-auth-token") ?? "{}")?.user?.id ?? userId;
+    const coachId = getUserIdFromSession() ?? userId;
     // 1. Simpan kehadiran tiap atlet → POST /attendance
     const attPromises = roster.map((a) =>
       createAttendance.mutateAsync({

@@ -57,7 +57,7 @@ function TrainingPage() {
         {sessions.length === 0 && !isLoading && !isError && (
           <Card className="col-span-full border-dashed">
             <CardContent className="p-12 text-center text-sm text-muted-foreground">
-              Belum ada sesi latihan. Buat lewat Session Builder.
+              Belum ada sesi latihan. Buat lewat Tambah Sesi di halaman Program.
             </CardContent>
           </Card>
         )}

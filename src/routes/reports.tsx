@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileDown, TrendingUp, Trophy, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useReports, getAcademyId } from "@/lib/queries";
+import { getAuthToken } from "@/lib/api";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({ meta: [{ title: "Reports — SportAcademy" }] }),
@@ -21,7 +22,7 @@ function ReportsPage() {
   const { data: r, isLoading, isError } = useReports();
 
   const handleExport = () => {
-    const token = JSON.parse(localStorage.getItem("sb-127-auth-token") ?? "{}")?.access_token;
+    const token = getAuthToken();
     if (!token) { toast.error("Sesi tidak valid"); return; }
     // buka URL export CSV dengan token di header — pakai fetch + blob download
     fetch(`http://localhost:8081/reports/export`, { headers: { Authorization: `Bearer ${token}` } })

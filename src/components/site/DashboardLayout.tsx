@@ -19,8 +19,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRole, ROLE_LABEL, type Role } from "@/lib/role";
-import { apiData } from "@/lib/api";
-import { supabase } from "@/integrations/supabase/client";
+import { apiData, clearAuthToken } from "@/lib/api";
 
 type NavItem = { icon: typeof Home; label: string; to: string };
 
@@ -50,6 +49,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: UsersRound, label: "Athletes Overview", to: "/athletes" },
     { icon: Megaphone, label: "Coaches", to: "/coaches" },
     { icon: BookOpen, label: "Training Programs", to: "/programs" },
+    { icon: LayoutTemplate, label: "Session Builder", to: "/session-builder" },
     { icon: Wallet, label: "Revenue", to: "/revenue" },
     { icon: ChartLine, label: "Reports", to: "/reports" },
     { icon: Settings, label: "Settings", to: "/settings" },
@@ -286,11 +286,12 @@ export function DashboardLayout({
   const initials = fallbackName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "DU";
 
   const handleLogout = () => {
-    // SignOut dari Supabase + hapus state & cache menu lokal
-    void supabase.auth.signOut();
+    // Hapus semua state & cache lokal (session dikelola via token localStorage)
+    clearAuthToken();
     localStorage.removeItem("sportacademy.role");
     localStorage.removeItem("sportacademy.academy");
     localStorage.removeItem("sportacademy.user");
+    localStorage.removeItem("sportacademy.permissions");
     for (const r of ["owner", "admin", "coach", "parent"] as Role[]) {
       localStorage.removeItem(MENUS_CACHE_KEY(r));
     }

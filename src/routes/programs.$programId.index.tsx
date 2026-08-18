@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, CalendarClock, Clock, Target, Users, Loader2, Pencil, Trash2, Save } from "lucide-react";
+import { ArrowLeft, CalendarClock, Clock, Target, Users, Loader2, Pencil, Trash2, Save, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useProgramDetail, useDeleteProgram } from "@/lib/queries";
+import { SessionBuilderModal } from "@/components/site/SessionBuilderModal";
 
 export const Route = createFileRoute("/programs/$programId/")({
   head: () => ({ meta: [{ title: "Detail Program — SportAcademy" }] }),
@@ -26,6 +27,7 @@ function ProgramDetailPage() {
   const { programId } = Route.useParams();
   const { data: program, isLoading } = useProgramDetail(programId);
   const [delOpen, setDelOpen] = useState(false);
+  const [sessOpen, setSessOpen] = useState(false);
   const remove = useDeleteProgram();
 
   if (isLoading) {
@@ -99,12 +101,17 @@ function ProgramDetailPage() {
                   <CalendarClock className="h-5 w-5 text-primary" />
                   <h2 className="font-display text-lg font-semibold">Sesi Latihan</h2>
                 </div>
-                <Badge variant="secondary">{sessions.length} sesi · {totalBlocks} blok drill</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{sessions.length} sesi · {totalBlocks} blok drill</Badge>
+                  <Button size="sm" onClick={() => setSessOpen(true)}>
+                    <Plus className="mr-1 h-4 w-4" /> Tambah Sesi
+                  </Button>
+                </div>
               </div>
 
               {sessions.length === 0 ? (
                 <p className="mt-6 rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Belum ada sesi latihan untuk program ini. Buat lewat Session Builder.
+                  Belum ada sesi latihan untuk program ini. Klik <span className="font-semibold text-primary">Tambah Sesi</span> untuk mulai.
                 </p>
               ) : (
                 <div className="mt-4 space-y-2">
@@ -145,6 +152,12 @@ function ProgramDetailPage() {
       </div>
 
       <DeleteProgramDialog program={program} open={delOpen} onClose={() => setDelOpen(false)} />
+      <SessionBuilderModal
+        open={sessOpen}
+        onOpenChange={setSessOpen}
+        programId={program.id}
+        programTitle={program.title}
+      />
     </DashboardLayout>
   );
 }

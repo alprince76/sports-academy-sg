@@ -69,6 +69,13 @@ export interface Drill {
   duration: number;
   focus: string | null;
   equipment: string | null;
+  age_group: string | null;
+  objective: string | null;
+  instructions: string | null;
+  tips: string | null;
+  common_mistakes: string | null;
+  safety: string | null;
+  tags: string | null;
 }
 
 export interface Invoice {

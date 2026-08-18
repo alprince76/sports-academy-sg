@@ -4,16 +4,12 @@ import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Clock, Dumbbell, Zap, Pencil, Trash2, Save, Loader2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
-import { useDrills, useUpdateDrill, useDeleteDrill } from "@/lib/queries";
+import { useDrills, useDeleteDrill } from "@/lib/queries";
 
-export const Route = createFileRoute("/drills/$drillId")({
+export const Route = createFileRoute("/drills/$drillId/")({
   head: () => ({ meta: [{ title: "Detail Drill — SportAcademy" }] }),
   component: DrillDetailPage,
   notFoundComponent: () => (
@@ -37,7 +33,6 @@ const INTENSITY_COLOR: Record<string, string> = {
 function DrillDetailPage() {
   const { drillId } = Route.useParams();
   const { data: drills = [], isLoading } = useDrills();
-  const [editOpen, setEditOpen] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const remove = useDeleteDrill();
 
@@ -58,8 +53,10 @@ function DrillDetailPage() {
       subtitle={`${drill.category} · ${drill.difficulty} · ${drill.intensity}`}
       actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1 h-4 w-4" /> Edit
+          <Button asChild variant="outline">
+            <Link to="/drills/$drillId/edit" params={{ drillId: drill.id }}>
+              <Pencil className="mr-1 h-4 w-4" /> Edit
+            </Link>
           </Button>
           <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDelOpen(true)}>
             <Trash2 className="mr-1 h-4 w-4" /> Hapus
@@ -79,22 +76,35 @@ function DrillDetailPage() {
               <InfoRow label="Durasi" value={`${drill.duration ?? "—"} menit`} />
               <InfoRow label="Focus" value={drill.focus ?? "—"} />
               <InfoRow label="Equipment" value={drill.equipment ?? "—"} />
+              {drill.age_group && <InfoRow label="Kelompok Umur" value={drill.age_group} />}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border/70 lg:col-span-2">
-          <CardContent className="p-6">
+          <CardContent className="space-y-5 p-6">
             <div className="flex items-center gap-2">
               <ListChecks className="h-5 w-5 text-primary" />
-              <h2 className="font-display text-lg font-semibold">Cara Melakukan</h2>
+              <h2 className="font-display text-lg font-semibold">Detail Latihan</h2>
             </div>
-            <p className="mt-4 rounded-lg bg-secondary/40 p-4 text-sm leading-relaxed text-muted-foreground">
-              {drill.focus
-                ? `Fokus latihan: ${drill.focus}. Drill kategori ${drill.category} dengan intensitas ${drill.intensity} selama ${drill.duration ?? "—"} menit.`
-                : "Belum ada deskripsi langkah untuk drill ini. Gunakan tombol Edit untuk menambahkan."}
-            </p>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {drill.objective && <DetailBlock title="Objective"><p>{drill.objective}</p></DetailBlock>}
+            {drill.instructions && <DetailBlock title="Instructions"><p className="whitespace-pre-line">{drill.instructions}</p></DetailBlock>}
+            {drill.tips && <DetailBlock title="Coaching Tips"><p>{drill.tips}</p></DetailBlock>}
+            {drill.common_mistakes && <DetailBlock title="Common Mistakes"><p>{drill.common_mistakes}</p></DetailBlock>}
+            {drill.safety && <DetailBlock title="Safety Notes"><p>{drill.safety}</p></DetailBlock>}
+            {drill.tags && (
+              <div className="flex flex-wrap gap-2">
+                {String(drill.tags).split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
+                  <Badge key={t} variant="secondary">{t}</Badge>
+                ))}
+              </div>
+            )}
+            {!drill.objective && !drill.instructions && !drill.tips && !drill.common_mistakes && !drill.safety && (
+              <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                Detail latihan belum diisi. Gunakan tombol Edit untuk melengkapi.
+              </p>
+            )}
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Stat label="Durasi" value={`${drill.duration ?? "—"}m`} icon={<Clock className="h-4 w-4" />} />
               <Stat label="Difficulty" value={drill.difficulty} icon={<Zap className="h-4 w-4" />} />
               <Stat label="Kategori" value={drill.category} icon={<Dumbbell className="h-4 w-4" />} />
@@ -104,9 +114,17 @@ function DrillDetailPage() {
         </Card>
       </div>
 
-      <EditDrillDialog drill={drill} open={editOpen} onClose={() => setEditOpen(false)} />
       <DeleteDrillDialog drill={drill} open={delOpen} onClose={() => setDelOpen(false)} />
     </DashboardLayout>
+  );
+}
+
+function DetailBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="mt-1.5 rounded-lg bg-secondary/40 p-3 text-sm leading-relaxed text-muted-foreground">{children}</div>
+    </div>
   );
 }
 
@@ -126,72 +144,6 @@ function Stat({ label, value, icon }: { label: string; value: string; icon: Reac
       <p className="mt-2 font-display text-lg font-bold text-primary">{value}</p>
       <p className="text-[10px] uppercase text-muted-foreground">{label}</p>
     </div>
-  );
-}
-
-function EditDrillDialog({ drill, open, onClose }: { drill: any; open: boolean; onClose: () => void }) {
-  const [title, setTitle] = useState(drill.title);
-  const [category, setCategory] = useState(drill.category);
-  const [difficulty, setDifficulty] = useState(drill.difficulty);
-  const [intensity, setIntensity] = useState(drill.intensity);
-  const [duration, setDuration] = useState(String(drill.duration ?? 10));
-  const [focus, setFocus] = useState(drill.focus ?? "");
-  const [equipment, setEquipment] = useState(drill.equipment ?? "");
-  const update = useUpdateDrill();
-
-  const submit = () => {
-    if (!title.trim() || !category.trim()) { toast.error("Nama & kategori wajib diisi"); return; }
-    update.mutate({
-      id: drill.id,
-      title: title.trim(),
-      category: category.trim(),
-      difficulty,
-      intensity,
-      duration: Number(duration) || 10,
-      focus: focus || null,
-      equipment: equipment || null,
-    }, {
-      onSuccess: () => { toast.success("Drill diperbarui"); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui"),
-    });
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Edit Drill</DialogTitle></DialogHeader>
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-2"><Label>Nama Drill</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Kategori</Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ball Handling" /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label>Difficulty</Label>
-              <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{["Beginner", "Intermediate", "Advanced"].map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Intensity</Label>
-              <Select value={intensity} onValueChange={setIntensity}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{["Low", "Medium", "High"].map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid gap-2"><Label>Durasi (menit)</Label><Input type="number" min={1} value={duration} onChange={(e) => setDuration(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Focus</Label><Input value={focus} onChange={(e) => setFocus(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Equipment</Label><Input value={equipment} onChange={(e) => setEquipment(e.target.value)} placeholder="Bola, cone..." /></div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Batal</Button>
-          <Button onClick={submit} disabled={update.isPending}>
-            {update.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            <Save className="mr-1 h-4 w-4" /> Simpan
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
