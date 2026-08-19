@@ -27,19 +27,7 @@ function classifySession(s: Session, now: Date): Zone {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   if (dateOnly.getTime() < today.getTime()) return "past";
-  if (dateOnly.getTime() === today.getTime()) {
-    if (s.start_time && s.end_time) {
-      const [sh, sm] = s.start_time.split(":").map(Number);
-      const [eh, em] = s.end_time.split(":").map(Number);
-      const startMs = new Date(y, m - 1, d, sh, sm).getTime();
-      const endMs = new Date(y, m - 1, d, eh, em).getTime();
-      const nowMs = now.getTime();
-      if (nowMs >= startMs && nowMs <= endMs) return "now";
-      if (nowMs < startMs) return "next";
-      return "past";
-    }
-    return "now";
-  }
+  if (dateOnly.getTime() === today.getTime()) return "now";
   return "next";
 }
 
@@ -136,21 +124,22 @@ function ProgramCard({ pid, sessions, programs, now }: {
           <Badge variant="secondary">{sessions.length} sesi</Badge>
         </div>
 
-        {/* Info program: coach, kelompok umur, jumlah atlet — diperbesar */}
-        <div className="mb-3 grid grid-cols-3 gap-2">
-          <div className="rounded-lg bg-secondary/50 px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Pelatih</p>
-            <p className="truncate text-sm font-bold text-foreground">{prog?.head_coach || prog?.coach || "—"}</p>
-          </div>
-          <div className="rounded-lg bg-secondary/50 px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Kelompok</p>
-            <p className="truncate text-sm font-bold text-foreground">{prog?.age_group || "—"}</p>
-          </div>
-          <div className="rounded-lg bg-secondary/50 px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Atlet</p>
-            <p className="truncate text-sm font-bold text-foreground">{prog?.athlete_count ?? 0} org</p>
-          </div>
-        </div>
+        {/* Info program: Pelatih sendiri, Kelompok+Atlet 1 baris */}
+        {(() => {
+          const prog = programs.find((p) => p.id === pid);
+          return (
+            <div className="mb-3 space-y-1 text-sm">
+              <p className="text-muted-foreground">
+                Pelatih: <span className="font-semibold text-foreground">{prog?.head_coach || prog?.coach || "—"}</span>
+              </p>
+              <p className="text-muted-foreground">
+                Kelompok: <span className="font-semibold text-foreground">{prog?.age_group || "—"}</span>
+                <span className="mx-1.5">·</span>
+                Atlet: <span className="font-semibold text-foreground">{prog?.athlete_count ?? 0} org</span>
+              </p>
+            </div>
+          );
+        })()}
 
         {/* List vertikal: Hari Ini → Sesi Mendatang → Sesi Sebelumnya */}
         <div className="space-y-2.5">

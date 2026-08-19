@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MapPin, Clock, Trash2, Pencil, Save, Loader2 } from "lucide-react";
+import { Plus, MapPin, Clock, Trash2, Pencil, Save, Loader2, CalendarRange, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { toast } from "sonner";
-import { useSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, type Schedule } from "@/lib/queries";
+import { useSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, useSessions, usePrograms, type Schedule, type Session } from "@/lib/queries";
+import { getRole } from "@/lib/role";
 
 export const Route = createFileRoute("/schedule")({
-  head: () => ({ meta: [{ title: "Schedule — SportAcademy" }] }),
+  head: () => ({ meta: [{ title: "Jadwal & Kalender — SportAcademy" }] }),
   component: SchedulePage,
 });
 
@@ -21,6 +22,119 @@ const DAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 const DATES = ["3", "4", "5", "6", "7", "8", "9"];
 
 function SchedulePage() {
+  const role = getRole();
+  if (role === "coach") return <CoachScheduleView />;
+  return <GenericScheduleView />;
+}
+
+/** KALENDER COACH — mengikuti jadwal Training Session (program + tanggal + jam). */
+function CoachScheduleView() {
+  const { data: sessions = [], isLoading, isError } = useSessions();
+  const { data: programs = [] } = usePrograms();
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const progName = (pid: string | null) => programs.find((p) => p.id === pid)?.title ?? "Tanpa Program";
+  const progCoach = (pid: string | null) => {
+    const p = programs.find((x) => x.id === pid);
+    return p?.head_coach ?? p?.coach ?? "—";
+  };
+
+  // Minggu ini (Sen–Min) berdasarkan offset
+  const start = new Date();
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7) + weekOffset * 7); // Senin
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+  const weekLabel = `${weekDays[0].slice(8)} ${weekDays[0].slice(5, 7)} – ${weekDays[6].slice(8)} ${weekDays[6].slice(5, 7)}`;
+
+  const fmt = (t: string | null) => (t ? t.slice(0, 5) : "—");
+
+  return (
+    <DashboardLayout
+      title="Jadwal & Kalender"
+      subtitle={`Training Session — minggu ${weekLabel}`}
+      actions={
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset(weekOffset - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset(0)}>Minggu Ini</Button>
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset(weekOffset + 1)}><ChevronRight className="h-4 w-4" /></Button>
+        </div>
+      }
+    >
+      {isLoading && (
+        <Card className="border-dashed"><CardContent className="p-12 text-center text-sm text-muted-foreground">Memuat jadwal...</CardContent></Card>
+      )}
+      {isError && (
+        <Card className="border-dashed"><CardContent className="p-12 text-center text-sm text-muted-foreground">
+          Gagal memuat data dari backend. Pastikan backend :8081 jalan.
+        </CardContent></Card>
+      )}
+      <Card className="border-border/70">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-7 border-b border-border bg-secondary/50">
+            {DAYS.map((d, i) => {
+              const today = new Date().toISOString().slice(0, 10);
+              const isToday = weekDays[i] === today;
+              return (
+                <div key={d} className={`border-r border-border p-3 text-center last:border-r-0 ${isToday ? "bg-emerald-50" : ""}`}>
+                  <p className="text-xs uppercase text-muted-foreground">{d}</p>
+                  <p className={`font-display text-lg font-bold ${isToday ? "text-emerald-600" : ""}`}>{weekDays[i].slice(8)}</p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-7 min-h-[480px]">
+            {weekDays.map((date, dayIdx) => {
+              const dayEvents = sessions
+                .filter((s) => s.session_date === date)
+                .sort((a, b) => (a.start_time || "00:00").localeCompare(b.start_time || "00:00"));
+              return (
+                <div key={dayIdx} className="space-y-1.5 border-r border-border p-2 last:border-r-0">
+                  {dayEvents.length === 0 && (
+                    <p className="rounded-md border border-dashed border-border/60 p-2 text-center text-[10px] text-muted-foreground/50">—</p>
+                  )}
+                  {dayEvents.map((s: Session) => (
+                    <div key={s.id} className="rounded-md border border-primary/30 bg-primary/5 p-2">
+                      <p className="truncate text-[11px] font-bold text-primary">{fmt(s.start_time)}</p>
+                      <p className="mt-0.5 truncate text-[10px] font-semibold text-foreground">{s.title}</p>
+                      <p className="truncate text-[9px] text-muted-foreground">{progName(s.program_id)}</p>
+                      <p className="mt-0.5 flex items-center gap-1 text-[9px] text-muted-foreground">
+                        <Users className="h-2.5 w-2.5" /> {progCoach(s.program_id)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ringkasan sesi per program */}
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {programs.filter((p) => sessions.some((s) => s.program_id === p.id)).map((p) => {
+          const pSessions = sessions.filter((s) => s.program_id === p.id);
+          const upcoming = pSessions.filter((s) => (s.session_date ?? "") >= new Date().toISOString().slice(0, 10)).length;
+          return (
+            <Card key={p.id} className="border-border/70">
+              <CardContent className="p-3">
+                <p className="truncate text-sm font-bold">{p.title}</p>
+                <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Clock className="h-3 w-3" /> {pSessions.length} sesi · {upcoming} mendatang
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </DashboardLayout>
+  );
+}
+
+/** JADWAL GENERIK (parent/admin/owner) — tabel schedules. */
+function GenericScheduleView() {
   const [selected, setSelected] = useState<Schedule | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Schedule | null>(null);
@@ -58,14 +172,13 @@ function SchedulePage() {
                   <button
                     key={e.id}
                     onClick={() => setSelected(e)}
-                    className={`w-full rounded-lg border p-2 text-left text-xs transition-all hover:shadow-card ${
-                      e.type === "match" ? "border-warning/40 bg-warning/10"
-                      : e.type === "meeting" ? "border-border bg-secondary"
-                      : "border-primary/30 bg-primary-soft/60"
-                    }`}
+                    className={`w-full rounded-md border p-2 text-left transition hover:shadow-sm ${e.type === "match" ? "border-amber-300 bg-amber-50" : e.type === "meeting" ? "border-purple-300 bg-purple-50" : "border-primary/30 bg-primary/5"}`}
                   >
-                    <p className="font-semibold">{e.time}</p>
-                    <p className="mt-0.5 line-clamp-2">{e.title}</p>
+                    <p className="flex items-center gap-1 text-[11px] font-bold">{e.time?.slice(0, 5)} <Clock className="h-3 w-3" /></p>
+                    <p className="mt-0.5 truncate text-[11px] font-semibold">{e.title}</p>
+                    <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-muted-foreground">
+                      <MapPin className="h-3 w-3" /> {e.venue || "—"}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -74,57 +187,25 @@ function SchedulePage() {
         </CardContent>
       </Card>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        {events.slice(0, 3).map((e) => (
-          <Card key={e.id} className="border-border/70">
-            <CardContent className="p-5">
-              <Badge variant="secondary" className="bg-primary-soft text-primary capitalize">{e.type}</Badge>
-              <p className="mt-2 font-display font-semibold">{e.title}</p>
-              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <p className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {DAYS[e.day - 1]}, {e.time}</p>
-                <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {e.venue ?? "—"}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {events.length === 0 && !isLoading && !isError && (
-          <Card className="col-span-full border-dashed">
-            <CardContent className="p-10 text-center text-sm text-muted-foreground">Belum ada jadwal minggu ini.</CardContent>
-          </Card>
-        )}
-      </div>
-
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent>
-          {selected && (
-            <>
-              <DialogHeader><DialogTitle>{selected.title}</DialogTitle></DialogHeader>
-              <div className="space-y-2 text-sm">
-                <Badge variant="secondary" className="bg-primary-soft text-primary capitalize">{selected.type}</Badge>
-                <p><span className="text-muted-foreground">Tim:</span> {selected.team ?? "—"}</p>
-                <p><span className="text-muted-foreground">Waktu:</span> {DAYS[selected.day - 1]}, {selected.time}</p>
-                <p><span className="text-muted-foreground">Lokasi:</span> {selected.venue ?? "—"}</p>
-              </div>
-              <DialogFooter className="gap-2 sm:justify-between">
-                <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => { setDelOpen(true); }}>
-                  <Trash2 className="mr-1 h-4 w-4" /> Hapus
-                </Button>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setSelected(null)}>Tutup</Button>
-                  <Button onClick={() => { setEditing(selected); setSelected(null); }}><Pencil className="mr-1 h-4 w-4" /> Edit</Button>
-                </div>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
       <DeleteScheduleDialog open={delOpen} onOpenChange={setDelOpen} schedule={selected} onDeleted={() => setSelected(null)} />
-      <ScheduleFormDialog
-        open={!!editing || addOpen}
-        onOpenChange={(o) => { if (!o) { setEditing(null); setAddOpen(false); } }}
-        schedule={editing}
-      />
+      <ScheduleFormDialog open={addOpen} onOpenChange={setAddOpen} schedule={null} />
+      <ScheduleFormDialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)} schedule={editing} />
+      {selected && (
+        <Dialog open onOpenChange={() => setSelected(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{selected.title}</DialogTitle></DialogHeader>
+            <div className="space-y-1 text-sm">
+              <p><Badge variant="secondary">{selected.type}</Badge></p>
+              <p className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4" /> {selected.time}</p>
+              <p className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> {selected.venue || "—"}</p>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => { setEditing(selected); setSelected(null); }}><Pencil className="mr-1 h-4 w-4" />Edit</Button>
+              <Button variant="destructive" onClick={() => { setDelOpen(true); setSelected(null); }}><Trash2 className="mr-1 h-4 w-4" />Hapus</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </DashboardLayout>
   );
 }
@@ -133,25 +214,16 @@ function DeleteScheduleDialog({ open, onOpenChange, schedule, onDeleted }: {
   open: boolean; onOpenChange: (v: boolean) => void; schedule: Schedule | null; onDeleted: () => void;
 }) {
   const remove = useDeleteSchedule();
-  const confirm = () => {
-    if (!schedule) return;
-    remove.mutate(schedule.id, {
-      onSuccess: () => { toast.success("Jadwal dihapus"); onOpenChange(false); onDeleted(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
-    });
-  };
+  if (!open || !schedule) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader><DialogTitle>Hapus Jadwal</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Yakin ingin menghapus <span className="font-semibold text-foreground">{schedule?.title}</span>?
-        </p>
-        <DialogFooter>
+        <p className="text-sm">Yakin ingin menghapus <span className="font-semibold">{schedule.title}</span>?</p>
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button variant="destructive" onClick={confirm} disabled={remove.isPending}>
-            {remove.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            <Trash2 className="mr-1 h-4 w-4" /> Hapus
+          <Button variant="destructive" onClick={() => remove.mutate(schedule.id, { onSuccess: () => { toast.success("Jadwal dihapus"); onOpenChange(false); onDeleted(); } })}>
+            <Trash2 className="mr-1 h-4 w-4" />Hapus
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -163,83 +235,83 @@ function DeleteScheduleDialog({ open, onOpenChange, schedule, onDeleted }: {
 function ScheduleFormDialog({ open, onOpenChange, schedule }: {
   open: boolean; onOpenChange: (v: boolean) => void; schedule: Schedule | null;
 }) {
+  const create = useCreateSchedule();
+  const update = useUpdateSchedule();
   const [title, setTitle] = useState(schedule?.title ?? "");
   const [day, setDay] = useState(String(schedule?.day ?? 1));
   const [time, setTime] = useState(schedule?.time ?? "16:00");
   const [type, setType] = useState<"training" | "match" | "meeting">(schedule?.type ?? "training");
   const [venue, setVenue] = useState(schedule?.venue ?? "");
-  const create = useCreateSchedule();
-  const update = useUpdateSchedule();
+  const [saving, setSaving] = useState(false);
   const isEdit = !!schedule;
 
-  // sync saat schedule berubah (buka dialog edit untuk item berbeda)
+  // sync saat berganti jadwal (edit target berubah)
   const [prevId, setPrevId] = useState<string | null>(null);
   if (schedule && schedule.id !== prevId) {
     setPrevId(schedule.id);
     setTitle(schedule.title);
     setDay(String(schedule.day));
-    setTime(schedule.time);
-    setType(schedule.type);
+    setTime(schedule.time ?? "16:00");
+    setType(schedule.type ?? "training");
     setVenue(schedule.venue ?? "");
-  } else if (!schedule && prevId !== null) {
-    setPrevId(null);
-    setTitle(""); setDay("1"); setTime("16:00"); setType("training"); setVenue("");
   }
 
-  const submit = () => {
+  const save = () => {
     if (!title.trim()) { toast.error("Judul wajib diisi"); return; }
-    const payload = { title: title.trim(), day: Number(day), time, type, venue: venue || null, team: schedule?.team ?? null };
-    if (isEdit) {
-      update.mutate({ id: schedule.id, ...payload }, {
-        onSuccess: () => { toast.success("Jadwal diperbarui"); onOpenChange(false); },
-        onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui"),
-      });
-    } else {
-      create.mutate(payload, {
-        onSuccess: () => { toast.success("Jadwal ditambahkan"); onOpenChange(false); },
-        onError: (e: any) => toast.error(e?.message ?? "Gagal menambah jadwal"),
-      });
-    }
+    setSaving(true);
+    const payload = { title, day: Number(day), time, type, venue: venue || null } as any;
+    const onSuccess = () => { toast.success(isEdit ? "Jadwal diperbarui" : "Jadwal ditambahkan"); setSaving(false); onOpenChange(false); };
+    const onError = (e: any) => { toast.error(e?.message ?? "Gagal simpan"); setSaving(false); };
+    if (isEdit && schedule) update.mutate({ id: schedule.id, ...payload } as any, { onSuccess, onError });
+    else create.mutate(payload, { onSuccess, onError });
   };
 
-  const busy = create.isPending || update.isPending;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o && !saving) onOpenChange(false); }}>
       <DialogContent>
-        <DialogHeader><DialogTitle>{isEdit ? "Edit Jadwal" : "Tambah Jadwal Baru"}</DialogTitle></DialogHeader>
-        <div className="grid gap-3">
-          <div className="grid gap-2"><Label>Judul</Label><Input placeholder="Mis. Latihan U-12 A" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+        <DialogHeader><DialogTitle>{isEdit ? "Edit Jadwal" : "Tambah Jadwal"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="mb-1 block text-xs font-medium">Judul</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="mis. Latihan Dribbling" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label>Hari</Label>
+            <div>
+              <Label className="mb-1 block text-xs font-medium">Hari</Label>
               <Select value={day} onValueChange={setDay}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {DAYS.map((d, i) => <SelectItem key={i + 1} value={String(i + 1)}>{d}</SelectItem>)}
+                  {DAYS.map((d, i) => <SelectItem key={d} value={String(i + 1)}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2"><Label>Waktu</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
+            <div>
+              <Label className="mb-1 block text-xs font-medium">Jam</Label>
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label>Jenis</Label>
-              <Select value={type} onValueChange={(v) => setType(v as any)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="match">Match</SelectItem>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2"><Label>Lokasi</Label><Input placeholder="Lapangan A" value={venue} onChange={(e) => setVenue(e.target.value)} /></div>
+          <div>
+            <Label className="mb-1 block text-xs font-medium">Tipe</Label>
+            <Select value={type} onValueChange={(v) => setType(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="training">Training</SelectItem>
+                <SelectItem value="match">Match</SelectItem>
+                <SelectItem value="meeting">Meeting</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="mb-1 block text-xs font-medium">Venue</Label>
+            <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="mis. GOR Garuda" />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button onClick={submit} disabled={busy}>{busy ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Menyimpan...</> : <><Save className="mr-1 h-4 w-4" />{isEdit ? "Simpan Perubahan" : "Simpan"}</>}</Button>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Batal</Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+            {isEdit ? "Simpan Perubahan" : "Simpan"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -76,6 +76,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { icon: Shield, label: "Tim", to: "/teams" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
     { icon: Activity, label: "Training Sessions", to: "/training" },
+    { icon: CalendarCheck, label: "Jadwal & Kalender", to: "/schedule" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
     { icon: ScanLine, label: "OCR Import", to: "/assessment/import" },
     { icon: Award, label: "Match Performance (PIR)", to: "/match-performance" },
