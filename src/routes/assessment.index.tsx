@@ -11,9 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadarChart } from "@/components/site/RadarChart";
 import { SKILL_CATEGORIES, SKILL_SCALE } from "@/lib/assessment-data";
-import { Save, FileCheck2, Target, Send, Eye, ScanLine, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Save, FileCheck2, Target, Send, Eye, ScanLine, Trash2, Pencil, Loader2, Layers3 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiData } from "@/lib/api";
 import { useAthletes, useAssessments, useCreateAssessment, useUpdateAssessment, useDeleteAssessment, type Assessment } from "@/lib/queries";
 
 export const Route = createFileRoute("/assessment/")({
@@ -36,6 +39,7 @@ function AssessmentPage() {
   const remove = useDeleteAssessment();
   const navigate = Route.useNavigate();
   const [editing, setEditing] = useState<Assessment | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
 
   // set default atlet pertama saat data siap
   useEffect(() => {
@@ -71,6 +75,7 @@ function AssessmentPage() {
               </SelectContent>
             </Select>
           </div>
+          <Button variant="outline" onClick={() => setBatchOpen(true)}><Layers3 className="mr-1 h-4 w-4" />Batch Koreksi</Button>
           <Button asChild><Link to="/assessment/import"><ScanLine className="mr-1 h-4 w-4" />Import from Scan (OCR)</Link></Button>
         </div>
       }
@@ -168,7 +173,119 @@ function AssessmentPage() {
       </Tabs>
 
       <EditAssessmentDialog assessment={editing} onClose={() => setEditing(null)} />
+      <BatchEditDialog open={batchOpen} onClose={() => setBatchOpen(false)} />
     </DashboardLayout>
+  );
+}
+
+/** Batch koreksi — tampilkan semua assessment Draft lintas atlet, checkbox, ubah skor/catatan sekali untuk semua terpilih. */
+function BatchEditDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { data: athletes = [] } = useAthletes();
+  const update = useUpdateAssessment();
+  const qc = useQueryClient();
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [scores, setScores] = useState<Record<string, number>>(
+    Object.fromEntries(SKILL_CATEGORIES.map((c) => [c, 3]))
+  );
+  const [note, setNote] = useState("");
+  const [loaded, setLoaded] = useState<Record<string, { id: string; name: string }>>({});
+  const [saving, setSaving] = useState(false);
+
+  // fetch semua assessment Draft lintas atlet (agregasi)
+  useEffect(() => {
+    if (!open || !athletes.length) return;
+    let cancelled = false;
+    (async () => {
+      const map: Record<string, { id: string; name: string }> = {};
+      for (const a of athletes) {
+        try {
+          const list = await apiData<Assessment[]>(`/assessments?athlete_id=${a.id}`);
+          const draft = list.find((x) => x.status === "Draft");
+          if (draft) map[draft.id] = { id: draft.id, name: a.name };
+        } catch { /* skip */ }
+      }
+      if (!cancelled) setLoaded(map);
+    })();
+    return () => { cancelled = true; };
+  }, [open, athletes]);
+
+  const ids = Object.keys(loaded);
+  const selIds = ids.filter((id) => selected[id]);
+
+  const applyToAll = () => {
+    if (selIds.length === 0) { toast.info("Pilih minimal 1 assessment"); return; }
+    setSaving(true);
+    Promise.all(selIds.map((id) =>
+      update.mutateAsync({ id, scores, coach_note: note.trim() || null } as any)
+        .then(() => true).catch(() => false)
+    )).then((res) => {
+      const ok = res.filter(Boolean).length;
+      setSaving(false);
+      toast.success(`Batch selesai`, { description: `${ok}/${selIds.length} assessment diperbarui` });
+      setSelected({});
+      setNote("");
+      qc.invalidateQueries({ queryKey: ["assessments"] });
+      onClose();
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Batch Koreksi Assessment</DialogTitle></DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Centang assessment Draft yang mau dikoreksi, lalu set skor/catatan — berlaku untuk semua yang terpilih sekaligus.
+        </p>
+
+        {/* daftar assessment draft lintas atlet */}
+        <div className="mt-3 max-h-60 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+          {ids.length === 0 && !Object.keys(loaded).length && (
+            <p className="p-3 text-center text-xs text-muted-foreground">Tidak ada assessment Draft.</p>
+          )}
+          {ids.map((id) => (
+            <label key={id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50">
+              <Checkbox
+                checked={!!selected[id]}
+                onCheckedChange={(v) => setSelected({ ...selected, [id]: !!v })}
+              />
+              <span className="flex-1 text-sm font-medium">{loaded[id]?.name ?? "Atlet"}</span>
+              <Badge variant="secondary" className="text-[10px]">{loaded[id]?.id?.slice(0, 8)}</Badge>
+            </label>
+          ))}
+          {ids.length > 0 && (
+            <button className="mt-1 w-full rounded-md border border-dashed py-1 text-[11px] font-medium text-primary hover:bg-primary/5"
+              onClick={() => setSelected(Object.fromEntries(ids.map((id) => [id, true])))}>
+              Pilih semua ({ids.length})
+            </button>
+          )}
+        </div>
+
+        {/* skor & catatan untuk batch */}
+        <div className="mt-3 space-y-4">
+          {SKILL_CATEGORIES.map((c) => (
+            <div key={c}>
+              <div className="mb-1 flex justify-between text-sm">
+                <span className="font-medium">{c}</span>
+                <span className="font-display text-base font-bold text-primary">{scores[c]} · {SKILL_SCALE[scores[c] - 1]?.label}</span>
+              </div>
+              <Slider value={[scores[c]]} min={1} max={5} step={1} onValueChange={([v]) => setScores({ ...scores, [c]: v })} />
+            </div>
+          ))}
+          <div>
+            <p className="mb-1.5 text-sm font-medium">Coach Note (semua terpilih)</p>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-20" placeholder="Catatan yang sama untuk semua atlet terpilih (opsional)" />
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
+          <Button onClick={applyToAll} disabled={saving || selIds.length === 0}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Layers3 className="mr-1 h-4 w-4" />}
+            Terapkan ke {selIds.length} terpilih
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
