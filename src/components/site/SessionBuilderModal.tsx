@@ -99,19 +99,24 @@ export function SessionBuilderModal({
     if (!BLOCK_ORDER.includes(targetBlock)) return;
 
     const src = String(active?.id);
-    // Format id: "drill:<block>:<drillId>" (drill di dalam blok) atau "lib:<drillId>" (dari library)
     const srcIsInBlock = src.startsWith("drill:");
-    const [_, ...restParts] = src.includes(":") ? src.split(":") : ["", src];
-    const drillId = String(restParts.join(":"));
-
+    // Format "drill:<block>:<uuid>" — block bisa mengandung spasi ("Small Side Game")
+    // sehingga uuid = gabungan setelah 2 titik dua pertama.
+    let drillId = src;
+    let sourceBlock: BlockId | null = null;
     if (srcIsInBlock) {
-      // Draggable dari dalam blok → pindah antar kategori
-      const sourceBlock = src.split(":")[1] as BlockId;
-      if (sourceBlock === targetBlock) return; // sudah di blok itu
+      const parts = src.split(":");
+      sourceBlock = parts[1] as BlockId;
+      drillId = parts.slice(2).join(":");
+    }
+
+    if (srcIsInBlock && sourceBlock) {
+      const sourceBlockI = sourceBlock as BlockId;
+      if (sourceBlockI === targetBlock) return;
       if ((blocks[targetBlock] ?? []).includes(drillId)) { toast.info("Drill sudah ada di blok ini"); return; }
       setBlocks((prev) => ({
         ...prev,
-        [sourceBlock]: (prev[sourceBlock] ?? []).filter((x) => x !== drillId),
+        [sourceBlockI]: (prev[sourceBlockI] ?? []).filter((x) => x !== drillId),
         [targetBlock]: [...(prev[targetBlock] ?? []), drillId],
       }));
       toast.success(`Drill dipindah ke ${targetBlock}`);
@@ -215,14 +220,24 @@ export function SessionBuilderModal({
                           if (!d) return null;
                           return (
                             <DraggableDrill key={did} id={`drill:${cat}:${did}`}>
-                              <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                                <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="truncate text-sm font-semibold">{d.title}</p>
-                                  <p className="text-xs text-muted-foreground">{d.focus ?? d.category} · {d.difficulty} · {d.duration} min</p>
+                              {({ attributes, listeners }) => (
+                                <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                                  <button
+                                    type="button"
+                                    {...listeners}
+                                    {...attributes}
+                                    className="cursor-grab touch-none active:cursor-grabbing"
+                                    aria-label={`Seret ${d.title}`}
+                                  >
+                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                  </button>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="truncate text-sm font-semibold">{d.title}</p>
+                                    <p className="text-xs text-muted-foreground">{d.focus ?? d.category} · {d.difficulty} · {d.duration} min</p>
+                                  </div>
+                                  <Button size="icon" variant="ghost" onClick={() => removeDrill(cat, did)}><X className="h-4 w-4" /></Button>
                                 </div>
-                                <Button size="icon" variant="ghost" onClick={() => removeDrill(cat, did)}><X className="h-4 w-4" /></Button>
-                              </div>
+                              )}
                             </DraggableDrill>
                           );
                         })}
@@ -247,16 +262,29 @@ export function SessionBuilderModal({
               <div className="mt-3 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
                 {drills.map((d) => (
                   <DraggableDrill key={d.id} id={d.id} className="rounded-lg border border-border p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold">{d.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{d.focus ?? d.category} · {d.duration}m</p>
+                    {({ attributes, listeners }) => (
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-1.5">
+                          <button
+                            type="button"
+                            {...listeners}
+                            {...attributes}
+                            className="mt-0.5 cursor-grab touch-none active:cursor-grabbing"
+                            aria-label={`Seret ${d.title}`}
+                          >
+                            <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold">{d.title}</p>
+                            <p className="text-[10px] text-muted-foreground">{d.focus ?? d.category} · {d.duration}m</p>
+                            <Badge variant="secondary" className={`mt-1.5 text-[10px] ${BLOCK_META[CATEGORY_TO_BLOCK[d.category] ?? "Fundamental"]?.color ?? "bg-secondary"}`}>{d.category}</Badge>
+                          </div>
+                        </div>
+                        <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => addByCategory(d.category, d.id)}>
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
-                      <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => addByCategory(d.category, d.id)}>
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                    <Badge variant="secondary" className={`mt-1.5 text-[10px] ${BLOCK_META[CATEGORY_TO_BLOCK[d.category] ?? "Fundamental"]?.color ?? "bg-secondary"}`}>{d.category}</Badge>
+                    )}
                   </DraggableDrill>
                 ))}
                 {drills.length === 0 && (
@@ -294,17 +322,19 @@ function DroppableBlock({ id, children }: { id: BlockId; children: React.ReactNo
   );
 }
 
-/** Item drill yang bisa diseret — wrapper minimal (drag listeners); styling di call-site. */
-function DraggableDrill({ id, children, className = "" }: { id: string; children: React.ReactNode; className?: string }) {
+/** Item drill yang bisa diseret — drag hanya dari grip handle (listeners di handle, bukan seluruh item). */
+function DraggableDrill({ id, className = "", children }: {
+  id: string;
+  className?: string;
+  children: (p: { attributes: any; listeners: any }) => React.ReactNode;
+}) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id });
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40" : ""} ${className}`}
+      className={`${isDragging ? "opacity-40" : ""} ${className}`}
     >
-      {children}
+      {children({ attributes, listeners })}
     </div>
   );
 }
