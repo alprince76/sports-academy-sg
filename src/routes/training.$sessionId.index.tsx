@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
-import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation, useCreateAssessment } from "@/lib/queries";
+import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation, useCreateAssessment, useSessionEvaluations, useSessionAttendance, type Evaluation, type AttendanceRecord } from "@/lib/queries";
 import { getUserIdFromSession } from "@/lib/api";
 import { useSessionList } from "./training.index";
 import {
@@ -48,6 +48,55 @@ function SessionPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
+
+  // Prefill: muat evaluasi & kehadiran yang sudah tersimpan utk tanggal sesi ini
+  const sessionDate = session?.session_date ?? new Date().toISOString().slice(0, 10);
+  const sessionEvalsQ = useSessionEvaluations(sessionDate);
+  const sessionAttQ = useSessionAttendance(sessionDate);
+  const sessionEvals = sessionEvalsQ.data ?? [];
+  const sessionAttendance = sessionAttQ.data ?? [];
+
+  // Map evaluasi per atlet: 6 field backend (0-100) → 6 kategori skill (1-5)
+  const evalByAthlete = new Map<string, Evaluation>();
+  for (const e of sessionEvals) {
+    if (!evalByAthlete.has(e.athlete_id)) evalByAthlete.set(e.athlete_id, e);
+  }
+  const attendanceByAthlete = new Map<string, AttendanceRecord>();
+  for (const a of sessionAttendance) {
+    if (!attendanceByAthlete.has(a.athlete_id)) attendanceByAthlete.set(a.athlete_id, a);
+  }
+  const x5 = (v: number) => Math.max(1, Math.min(5, Math.round(v / 20)));
+  const toSkillEval = (e: Evaluation): Record<string, number> => ({
+    Shooting: x5(e.passing),
+    "Ball Handling": x5(e.dribbling),
+    Defense: x5(e.shooting),
+    Athleticism: x5(e.stamina),
+    Teamwork: x5(e.teamwork),
+    "Basketball IQ": x5(e.attitude),
+  });
+
+  // Prefill kehadiran & quick-score dari data yang sudah tersimpan (tunggu data async ada)
+  const [prefilledAtt, setPrefilledAtt] = useState(false);
+  useEffect(() => {
+    if (prefilledAtt) return;
+    // tunggu kedua query SELESAI (bukan cek size, krn attendance/evals bisa kosong valid)
+    if (!sessionEvalsQ.isSuccess || !sessionAttQ.isSuccess) return;
+    const att = Object.fromEntries(
+      roster.map((a) => [a.id, (attendanceByAthlete.get(a.id)?.status ?? "present") !== "absent"])
+    );
+    const sc = Object.fromEntries(
+      roster.map((a) => {
+        const e = evalByAthlete.get(a.id);
+        if (!e) return [a.id, 75];
+        const five = toSkillEval(e);
+        const vals = Object.values(five);
+        return [a.id, vals.length ? Math.round(vals.reduce((x, y) => x + y, 0) / vals.length * 20) : 75];
+      })
+    );
+    setPresent((prev) => ({ ...prev, ...att }));
+    setScores((prev) => ({ ...prev, ...sc }));
+    setPrefilledAtt(true);
+  }, [sessionAttQ.isSuccess, sessionEvalsQ.isSuccess, roster, attendanceByAthlete, evalByAthlete, sessionAttendance, prefilledAtt]);
 
   const handleSave = () => {
     if (!session || roster.length === 0) return;
@@ -121,8 +170,18 @@ function SessionPage() {
         <TabsContent value="session-eval" className="mt-4">
           <SessionEvaluationPanel
             roster={roster}
-            sessionDate={session?.session_date ?? new Date().toISOString().slice(0, 10)}
+            sessionDate={sessionDate}
             coachId={getUserIdFromSession() ?? userId}
+            prefillEvals={evalByAthlete}
+            prefillNotes={Object.fromEntries(
+              roster.map((a) => [a.id, evalByAthlete.get(a.id)?.note ?? ""])
+            )}
+            prefillScores={Object.fromEntries(
+              roster.map((a) => {
+                const e = evalByAthlete.get(a.id);
+                return [a.id, e ? toSkillEval(e) : { ...DEFAULT_SESSION_EVAL }];
+              })
+            )}
           />
         </TabsContent>
 
@@ -227,10 +286,13 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionEvaluationPanel({ roster, sessionDate, coachId }: {
+function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, prefillNotes, prefillScores }: {
   roster: { id: string; name: string; position?: string | null; team?: string | null; age_group?: string | null; health?: any; skills?: any }[];
   sessionDate: string;
   coachId: string;
+  prefillEvals?: Map<string, Evaluation>;
+  prefillNotes?: Record<string, string>;
+  prefillScores?: Record<string, Record<string, number>>;
 }) {
   const createEvaluation = useCreateEvaluation();
   const createAssessment = useCreateAssessment();
@@ -243,6 +305,22 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId }: {
   const [obs, setObs] = useState("");
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [savingAll, setSavingAll] = useState(false);
+
+  // Prefill dari data yang sudah tersimpan (tunggu data async benar-benar ada)
+  const [prefilled, setPrefilled] = useState(false);
+  useEffect(() => {
+    if (prefilled) return;
+    if (!prefillEvals || prefillEvals.size === 0) return;
+    setEvals((prev) => {
+      const next = { ...prev };
+      for (const a of roster) {
+        if (prefillScores?.[a.id]) next[a.id] = { ...(prefillScores[a.id] as SessionSkillEvaluation) };
+      }
+      return next;
+    });
+    if (prefillNotes) setAthleteNotes({ ...prefillNotes });
+    setPrefilled(true);
+  }, [prefillScores, prefillNotes, prefillEvals, roster, prefilled]);
 
   const setScore = (id: string, key: SkillCategory, v: number) =>
     setEvals({ ...evals, [id]: { ...evals[id], [key]: v } });

@@ -645,6 +645,26 @@ export function useAttendance(athleteId: string, month: string) {
   });
 }
 
+// Semua evaluasi utk satu tanggal sesi (prefill halaman sesi)
+export function useSessionEvaluations(sessionDate: string) {
+  return useQuery({
+    queryKey: ["evaluations", "session", sessionDate],
+    queryFn: () => apiData<Evaluation[]>(`/evaluations?session_date=${sessionDate}`),
+    staleTime: 30_000,
+    enabled: !!sessionDate,
+  });
+}
+
+// Semua kehadiran utk satu tanggal sesi (prefill halaman sesi)
+export function useSessionAttendance(sessionDate: string) {
+  return useQuery({
+    queryKey: ["attendance", "session", sessionDate],
+    queryFn: () => apiData<AttendanceRecord[]>(`/attendance?session_date=${sessionDate}`),
+    staleTime: 30_000,
+    enabled: !!sessionDate,
+  });
+}
+
 /* ── Mutations fase 2 ── */
 export function useCreateSchedule() {
   const qc = useQueryClient();
