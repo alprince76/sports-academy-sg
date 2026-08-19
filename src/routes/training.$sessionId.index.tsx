@@ -119,7 +119,11 @@ function SessionPage() {
         </TabsList>
 
         <TabsContent value="session-eval" className="mt-4">
-          <SessionEvaluationPanel roster={roster} />
+          <SessionEvaluationPanel
+            roster={roster}
+            sessionDate={session?.session_date ?? new Date().toISOString().slice(0, 10)}
+            coachId={getUserIdFromSession() ?? userId}
+          />
         </TabsContent>
 
         <TabsContent value="roster" className="mt-4">
@@ -223,7 +227,12 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionEvaluationPanel({ roster }: { roster: { id: string; name: string; position?: string | null; team?: string | null; age_group?: string | null; health?: any; skills?: any }[] }) {
+function SessionEvaluationPanel({ roster, sessionDate, coachId }: {
+  roster: { id: string; name: string; position?: string | null; team?: string | null; age_group?: string | null; health?: any; skills?: any }[];
+  sessionDate: string;
+  coachId: string;
+}) {
+  const createEvaluation = useCreateEvaluation();
   const [evals, setEvals] = useState<Record<string, SessionSkillEvaluation>>(
     Object.fromEntries(roster.map((a) => [a.id, { ...DEFAULT_SESSION_EVAL }]))
   );
@@ -232,18 +241,49 @@ function SessionEvaluationPanel({ roster }: { roster: { id: string; name: string
   );
   const [obs, setObs] = useState("");
   const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [savingAll, setSavingAll] = useState(false);
 
   const setScore = (id: string, key: SkillCategory, v: number) =>
     setEvals({ ...evals, [id]: { ...evals[id], [key]: v } });
 
-  const saveAthlete = (id: string, name: string) => {
-    setSaved({ ...saved, [id]: true });
-    toast.success(`Evaluasi ${name} tersimpan`, { description: "6 kategori · masuk ke Evaluation Timeline" });
-    setTimeout(() => setSaved((s) => ({ ...s, [id]: false })), 1600);
+  // Mapping 6 kategori skill (1-5) → 6 field backend (1-100), ×20
+  const buildPayload = (id: string): Record<string, unknown> => {
+    const e = evals[id] ?? DEFAULT_SESSION_EVAL;
+    const x20 = (v: number) => Math.max(20, Math.min(100, Math.round(v * 20)));
+    return {
+      athlete_id: id,
+      coach_id: coachId,
+      session_date: sessionDate,
+      passing: x20(e.Shooting),
+      dribbling: x20(e["Ball Handling"]),
+      shooting: x20(e.Defense),
+      stamina: x20(e.Athleticism),
+      teamwork: x20(e.Teamwork),
+      attitude: x20(e["Basketball IQ"]),
+      note: (athleteNotes[id] ?? "").trim() || null,
+    };
   };
 
-  const saveAll = () => {
-    toast.success("Semua evaluasi tersimpan", { description: `${roster.length} atlet · data masuk ke aggregator periodic` });
+  const saveAthlete = async (id: string, name: string) => {
+    try {
+      await createEvaluation.mutateAsync(buildPayload(id) as any);
+      setSaved({ ...saved, [id]: true });
+      toast.success(`Evaluasi ${name} tersimpan`, { description: "6 kategori · tersimpan ke backend" });
+      setTimeout(() => setSaved((s) => ({ ...s, [id]: false })), 1600);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal simpan evaluasi");
+    }
+  };
+
+  const saveAll = async () => {
+    setSavingAll(true);
+    const res = await Promise.all(
+      roster.filter((a) => (a.health?.status ?? "Healthy") !== "Not Available")
+        .map((a) => createEvaluation.mutateAsync(buildPayload(a.id) as any).then(() => true).catch(() => false))
+    );
+    setSavingAll(false);
+    const ok = res.filter(Boolean).length;
+    toast.success(`Evaluasi tersimpan`, { description: `${ok}/${res.length} atlet tersimpan ke backend` });
   };
 
   return (
@@ -260,7 +300,9 @@ function SessionEvaluationPanel({ roster }: { roster: { id: string; name: string
                 </p>
               </div>
             </div>
-            <Button onClick={saveAll}><Save className="mr-1 h-4 w-4" />Save All</Button>
+            <Button onClick={saveAll} disabled={savingAll}>
+              {savingAll ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Menyimpan</> : <><Save className="mr-1 h-4 w-4" />Save All</>}
+            </Button>
           </div>
 
           <p className="mt-3 text-[11px] text-muted-foreground">
