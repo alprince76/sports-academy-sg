@@ -40,9 +40,11 @@ export interface Program {
   active: boolean;
   age_group: string | null;
   team: string | null;
+  team_id: string | null;
   season: string | null;
   head_coach: string | null;
   assistant_coach: string | null;
+  coach: string | null;
   start_date: string | null;
   end_date: string | null;
   primary_objective: string | null;

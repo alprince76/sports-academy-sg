@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2, CalendarClock, Play } from "lucide-react";
+import { Clock, CheckCircle2, CalendarClock, Play, ChevronDown, ChevronUp } from "lucide-react";
 import { useSessions, usePrograms, type Session } from "@/lib/queries";
 
 export const Route = createFileRoute("/training/")({
@@ -68,12 +69,11 @@ function TrainingPage() {
     ...programs.map((p) => p.id),
     ...Array.from(byProgram.keys()).filter((k) => k && !programs.some((p) => p.id === k)),
   ];
-  const programName = (pid: string | null) => pid ? (programs.find((p) => p.id === pid)?.title ?? "Program") : "Tanpa Program";
 
   return (
     <DashboardLayout
       title="Training Session"
-      subtitle="Semua program — sesi Hari Ini untuk dievaluasi, plus yang sebelum & sesudah."
+      subtitle="Semua program — sesi Hari Ini untuk dievaluasi, plus sesi mendatang & sebelumnya."
       actions={<Button asChild><Link to="/programs"><CalendarClock className="mr-1 h-4 w-4" /> Atur Sesi</Link></Button>}
     >
       {isLoading && (
@@ -92,110 +92,149 @@ function TrainingPage() {
 
       {/* Grid program — 3 program per baris di layar lebar */}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {allProgramKeys.map((pid) => {
-          const pSessions = byProgram.get(pid) ?? [];
-          const zones: Record<Zone, Session[]> = { past: [], now: [], next: [] };
-          for (const s of pSessions) zones[classifySession(s, now)].push(s);
-          zones.now.sort((a, b) => (a.start_time || "00:00").localeCompare(b.start_time || "00:00"));
-          zones.next.sort((a, b) => (a.session_date || "").localeCompare(b.session_date || ""));
-          zones.past.sort((a, b) => (b.session_date || "").localeCompare(a.session_date || ""));
-
-          const now_s = zones.now[0] ?? null;
-          const next_s = zones.next[0] ?? null;
-          const past_s = zones.past[0] ?? null;
-
-          return (
-            <Card key={pid ?? "nogroup"} className="border-border/70">
-              <CardContent className="p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <Badge variant="secondary" className="bg-primary-soft text-primary">{programName(pid)}</Badge>
-                  <span className="text-[10px] text-muted-foreground">{pSessions.length} sesi</span>
-                </div>
-
-                {/* Info program: coach, kelompok umur, jumlah atlet */}
-                {(() => {
-                  const prog = programs.find((p) => p.id === pid);
-                  return (
-                    <div className="mb-2 grid grid-cols-3 gap-1.5 text-[10px]">
-                      <div className="rounded-md bg-secondary/40 px-2 py-1">
-                        <p className="text-muted-foreground">Pelatih</p>
-                        <p className="truncate font-semibold">{prog?.head_coach || "—"}</p>
-                      </div>
-                      <div className="rounded-md bg-secondary/40 px-2 py-1">
-                        <p className="text-muted-foreground">Kelompok</p>
-                        <p className="truncate font-semibold">{prog?.age_group || "—"}</p>
-                      </div>
-                      <div className="rounded-md bg-secondary/40 px-2 py-1">
-                        <p className="text-muted-foreground">Atlet</p>
-                        <p className="truncate font-semibold">{prog?.athlete_count ?? 0} org</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* List vertikal: Hari Ini → Selanjutnya → Sebelumnya */}
-                <div className="space-y-2">
-                  {/* HARI INI — CTA Mulai Evaluasi */}
-                  <div className="rounded-lg border-2 border-emerald-400 bg-emerald-50/60 p-2.5">
-                    <p className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-                      <Play className="h-3 w-3" /> Hari Ini
-                    </p>
-                    {now_s ? (
-                      <>
-                        <p className="truncate text-sm font-bold">{now_s.title}</p>
-                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                          <Clock className="h-3 w-3" /> {formatTanggal(now_s.session_date)} · {formatJam(now_s)}
-                        </p>
-                        <Button asChild size="sm" className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700">
-                          <Link to="/training/$sessionId" params={{ sessionId: now_s.id }}>
-                            <Play className="mr-1 h-3.5 w-3.5" /> Mulai Evaluasi
-                          </Link>
-                        </Button>
-                      </>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground/70">Tidak ada sesi hari ini.</p>
-                    )}
-                  </div>
-
-                  {/* SELANJUTNYA */}
-                  <div className="rounded-lg border border-border p-2.5">
-                    <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                      <CalendarClock className="h-3 w-3" /> Selanjutnya
-                    </p>
-                    {next_s ? (
-                      <Link to="/training/$sessionId" params={{ sessionId: next_s.id }} className="block">
-                        <p className="truncate text-xs font-semibold">{next_s.title}</p>
-                        <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Clock className="h-3 w-3" /> {formatTanggal(next_s.session_date)} · {formatJam(next_s)}
-                        </p>
-                      </Link>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground/60">—</p>
-                    )}
-                  </div>
-
-                  {/* SEBELUMNYA */}
-                  <div className="rounded-lg border border-border p-2.5">
-                    <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      <CheckCircle2 className="h-3 w-3" /> Sebelumnya
-                    </p>
-                    {past_s ? (
-                      <Link to="/training/$sessionId" params={{ sessionId: past_s.id }} className="block">
-                        <p className="truncate text-xs font-semibold">{past_s.title}</p>
-                        <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Clock className="h-3 w-3" /> {formatTanggal(past_s.session_date)} · {formatJam(past_s)}
-                        </p>
-                      </Link>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground/60">—</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {allProgramKeys.map((pid) => (
+          <ProgramCard
+            key={pid ?? "nogroup"}
+            pid={pid}
+            sessions={byProgram.get(pid) ?? []}
+            programs={programs}
+            now={now}
+          />
+        ))}
       </div>
     </DashboardLayout>
+  );
+}
+
+function ProgramCard({ pid, sessions, programs, now }: {
+  pid: string | null;
+  sessions: Session[];
+  programs: ReturnType<typeof usePrograms>["data"] extends (infer T)[] | undefined ? T[] : never;
+  now: Date;
+}) {
+  const [expandNext, setExpandNext] = useState(false);
+  const [expandPast, setExpandPast] = useState(false);
+
+  const prog = programs.find((p) => p.id === pid);
+  const programName = pid ? (prog?.title ?? "Program") : "Tanpa Program";
+
+  const zones: Record<Zone, Session[]> = { past: [], now: [], next: [] };
+  for (const s of sessions) zones[classifySession(s, now)].push(s);
+  zones.now.sort((a, b) => (a.start_time || "00:00").localeCompare(b.start_time || "00:00"));
+  zones.next.sort((a, b) => (a.session_date || "").localeCompare(b.session_date || "") || (a.start_time || "00:00").localeCompare(b.start_time || "00:00"));
+  zones.past.sort((a, b) => (b.session_date || "").localeCompare(a.session_date || "") || (b.start_time || "00:00").localeCompare(a.start_time || "00:00"));
+
+  const nextVisible = expandNext ? zones.next : zones.next.slice(0, 2);
+  const pastVisible = expandPast ? zones.past : zones.past.slice(0, 2);
+
+  return (
+    <Card className="border-border/70">
+      <CardContent className="p-4">
+        {/* Nama program / tim */}
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="truncate font-display text-base font-bold text-foreground">{programName}</h3>
+          <Badge variant="secondary">{sessions.length} sesi</Badge>
+        </div>
+
+        {/* Info program: coach, kelompok umur, jumlah atlet — diperbesar */}
+        <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="rounded-lg bg-secondary/50 px-2.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Pelatih</p>
+            <p className="truncate text-sm font-bold text-foreground">{prog?.head_coach || prog?.coach || "—"}</p>
+          </div>
+          <div className="rounded-lg bg-secondary/50 px-2.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Kelompok</p>
+            <p className="truncate text-sm font-bold text-foreground">{prog?.age_group || "—"}</p>
+          </div>
+          <div className="rounded-lg bg-secondary/50 px-2.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Atlet</p>
+            <p className="truncate text-sm font-bold text-foreground">{prog?.athlete_count ?? 0} org</p>
+          </div>
+        </div>
+
+        {/* List vertikal: Hari Ini → Sesi Mendatang → Sesi Sebelumnya */}
+        <div className="space-y-2.5">
+          {/* HARI INI — semua sesi hari ini, CTA Mulai Evaluasi */}
+          <div className="rounded-lg border-2 border-emerald-400 bg-emerald-50/60 p-3">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+              <Play className="h-3.5 w-3.5" /> Hari Ini {zones.now.length > 1 && <Badge variant="secondary" className="text-[9px]">{zones.now.length} sesi</Badge>}
+            </p>
+            {zones.now.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground/70">Tidak ada sesi hari ini.</p>
+            ) : (
+              <div className="space-y-2">
+                {zones.now.map((s) => (
+                  <div key={s.id} className="rounded-md bg-white/70 p-2">
+                    <p className="truncate text-sm font-bold">{s.title}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Clock className="h-3 w-3" /> {formatTanggal(s.session_date)} · {formatJam(s)}
+                    </p>
+                    <Button asChild size="sm" className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700">
+                      <Link to="/training/$sessionId" params={{ sessionId: s.id }}>
+                        <Play className="mr-1 h-3.5 w-3.5" /> Mulai Evaluasi
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* SESI MENDATANG */}
+          <div className="rounded-lg border border-border p-3">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-primary">
+              <CalendarClock className="h-3.5 w-3.5" /> Sesi Mendatang
+              {zones.next.length > 0 && <Badge variant="secondary" className="text-[9px]">{zones.next.length}</Badge>}
+            </p>
+            {zones.next.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground/60">—</p>
+            ) : (
+              <div className="space-y-1.5">
+                {nextVisible.map((s) => (
+                  <Link key={s.id} to="/training/$sessionId" params={{ sessionId: s.id }} className="block rounded-md px-1.5 py-1 hover:bg-secondary/50">
+                    <p className="truncate text-xs font-semibold">{s.title}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Clock className="h-3 w-3" /> {formatTanggal(s.session_date)} · {formatJam(s)}
+                    </p>
+                  </Link>
+                ))}
+                {zones.next.length > 2 && (
+                  <button onClick={() => setExpandNext(!expandNext)} className="flex w-full items-center justify-center gap-1 rounded-md border border-dashed py-1 text-[11px] font-medium text-primary hover:bg-primary/5">
+                    {expandNext ? (<><ChevronUp className="h-3 w-3" /> Tutup</>) : (<><ChevronDown className="h-3 w-3" /> Lihat semua ({zones.next.length})</>)}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* SESI SEBELUMNYA */}
+          <div className="rounded-lg border border-border p-3">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Sesi Sebelumnya
+              {zones.past.length > 0 && <Badge variant="secondary" className="text-[9px]">{zones.past.length}</Badge>}
+            </p>
+            {zones.past.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground/60">—</p>
+            ) : (
+              <div className="space-y-1.5">
+                {pastVisible.map((s) => (
+                  <Link key={s.id} to="/training/$sessionId" params={{ sessionId: s.id }} className="block rounded-md px-1.5 py-1 hover:bg-secondary/50">
+                    <p className="truncate text-xs font-semibold">{s.title}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Clock className="h-3 w-3" /> {formatTanggal(s.session_date)} · {formatJam(s)}
+                    </p>
+                  </Link>
+                ))}
+                {zones.past.length > 2 && (
+                  <button onClick={() => setExpandPast(!expandPast)} className="flex w-full items-center justify-center gap-1 rounded-md border border-dashed py-1 text-[11px] font-medium text-primary hover:bg-primary/5">
+                    {expandPast ? (<><ChevronUp className="h-3 w-3" /> Tutup</>) : (<><ChevronDown className="h-3 w-3" /> Lihat semua ({zones.past.length})</>)}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
