@@ -21,7 +21,7 @@ import {
   type SessionSkillEvaluation, type SkillCategory,
 } from "@/lib/assessment-data";
 
-export const Route = createFileRoute("/training/$sessionId")({
+export const Route = createFileRoute("/training/$sessionId/")({
   head: () => ({ meta: [{ title: "Training Session — SportAcademy" }] }),
   component: SessionPage,
 });

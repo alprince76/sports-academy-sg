@@ -53,6 +53,7 @@ export function SessionBuilderModal({
 
   const [blocks, setBlocks] = useState<Record<BlockId, string[]>>(DEFAULT_BLOCKS());
   const [sessionTitle, setSessionTitle] = useState("");
+  const [sessionDate, setSessionDate] = useState(new Date().toISOString().slice(0, 10));
   const [startTime, setStartTime] = useState("16:00");
   const [endTime, setEndTime] = useState("17:30");
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,7 @@ export function SessionBuilderModal({
     setPrevKey(openKey);
     if (editSession) {
       setSessionTitle(editSession.title ?? "");
+      setSessionDate(editSession.session_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
       setStartTime(editSession.start_time?.slice(0, 5) ?? "16:00");
       setEndTime(editSession.end_time?.slice(0, 5) ?? "17:30");
       const next = DEFAULT_BLOCKS();
@@ -74,6 +76,7 @@ export function SessionBuilderModal({
     } else {
       setBlocks(DEFAULT_BLOCKS());
       setSessionTitle("");
+      setSessionDate(new Date().toISOString().slice(0, 10));
       setStartTime("16:00");
       setEndTime("17:30");
     }
@@ -138,7 +141,7 @@ export function SessionBuilderModal({
     }));
     const payload = {
       title: sessionTitle.trim() || `Sesi ${programTitle ?? ""}`.trim(),
-      session_date: new Date().toISOString().slice(0, 10),
+      session_date: sessionDate || new Date().toISOString().slice(0, 10),
       start_time: startTime || null,
       end_time: endTime || null,
       focus: totalDrills ? (drillById((blocks[BLOCK_ORDER[1]] ?? [])[0] ?? "")?.category ?? null) : null,
@@ -178,6 +181,7 @@ export function SessionBuilderModal({
             placeholder="Judul sesi (mis. Latihan Fokus Dribbling)"
             className="max-w-md"
           />
+          <Input type="date" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} className="w-40" />
           <div className="flex items-center gap-1.5 text-sm">
             <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-24" />
             <span className="text-muted-foreground">–</span>

@@ -7,7 +7,7 @@ import { Clock, CheckCircle2, CalendarClock, Play } from "lucide-react";
 import { useSessions, usePrograms, type Session } from "@/lib/queries";
 
 export const Route = createFileRoute("/training/")({
-  head: () => ({ meta: [{ title: "Coaching Session — SportAcademy" }] }),
+  head: () => ({ meta: [{ title: "Training Session — SportAcademy" }] }),
   component: TrainingPage,
 });
 
@@ -72,7 +72,7 @@ function TrainingPage() {
 
   return (
     <DashboardLayout
-      title="Coaching Session"
+      title="Training Session"
       subtitle="Semua program — sesi Hari Ini untuk dievaluasi, plus yang sebelum & sesudah."
       actions={<Button asChild><Link to="/programs"><CalendarClock className="mr-1 h-4 w-4" /> Atur Sesi</Link></Button>}
     >

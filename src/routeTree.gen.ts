@@ -33,7 +33,6 @@ import { Route as MatchPerformanceIndexRouteImport } from './routes/match-perfor
 import { Route as DrillsIndexRouteImport } from './routes/drills.index'
 import { Route as AthletesIndexRouteImport } from './routes/athletes.index'
 import { Route as AssessmentIndexRouteImport } from './routes/assessment.index'
-import { Route as TrainingSessionIdRouteImport } from './routes/training.$sessionId'
 import { Route as ProgramsNewRouteImport } from './routes/programs.new'
 import { Route as PaymentsInvoiceIdRouteImport } from './routes/payments.$invoiceId'
 import { Route as MatchPerformanceMatchIdRouteImport } from './routes/match-performance.$matchId'
@@ -41,6 +40,7 @@ import { Route as DrillsNewRouteImport } from './routes/drills.new'
 import { Route as AthletesAthleteIdRouteImport } from './routes/athletes.$athleteId'
 import { Route as AssessmentImportRouteImport } from './routes/assessment.import'
 import { Route as AssessmentAssessmentIdRouteImport } from './routes/assessment.$assessmentId'
+import { Route as TrainingSessionIdIndexRouteImport } from './routes/training.$sessionId.index'
 import { Route as ProgramsProgramIdIndexRouteImport } from './routes/programs.$programId.index'
 import { Route as DrillsDrillIdIndexRouteImport } from './routes/drills.$drillId.index'
 import { Route as TrainingSessionIdPrintRouteImport } from './routes/training.$sessionId.print'
@@ -167,11 +167,6 @@ const AssessmentIndexRoute = AssessmentIndexRouteImport.update({
   path: '/assessment/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrainingSessionIdRoute = TrainingSessionIdRouteImport.update({
-  id: '/training/$sessionId',
-  path: '/training/$sessionId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProgramsNewRoute = ProgramsNewRouteImport.update({
   id: '/programs/new',
   path: '/programs/new',
@@ -207,6 +202,11 @@ const AssessmentAssessmentIdRoute = AssessmentAssessmentIdRouteImport.update({
   path: '/assessment/$assessmentId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainingSessionIdIndexRoute = TrainingSessionIdIndexRouteImport.update({
+  id: '/training/$sessionId/',
+  path: '/training/$sessionId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgramsProgramIdIndexRoute = ProgramsProgramIdIndexRouteImport.update({
   id: '/programs/$programId/',
   path: '/programs/$programId/',
@@ -218,9 +218,9 @@ const DrillsDrillIdIndexRoute = DrillsDrillIdIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrainingSessionIdPrintRoute = TrainingSessionIdPrintRouteImport.update({
-  id: '/print',
-  path: '/print',
-  getParentRoute: () => TrainingSessionIdRoute,
+  id: '/training/$sessionId/print',
+  path: '/training/$sessionId/print',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProgramsProgramIdEditRoute = ProgramsProgramIdEditRouteImport.update({
   id: '/programs/$programId/edit',
@@ -258,7 +258,6 @@ export interface FileRoutesByFullPath {
   '/match-performance/$matchId': typeof MatchPerformanceMatchIdRoute
   '/payments/$invoiceId': typeof PaymentsInvoiceIdRoute
   '/programs/new': typeof ProgramsNewRoute
-  '/training/$sessionId': typeof TrainingSessionIdRouteWithChildren
   '/assessment/': typeof AssessmentIndexRoute
   '/athletes/': typeof AthletesIndexRoute
   '/drills/': typeof DrillsIndexRoute
@@ -271,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/training/$sessionId/print': typeof TrainingSessionIdPrintRoute
   '/drills/$drillId/': typeof DrillsDrillIdIndexRoute
   '/programs/$programId/': typeof ProgramsProgramIdIndexRoute
+  '/training/$sessionId/': typeof TrainingSessionIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -297,7 +297,6 @@ export interface FileRoutesByTo {
   '/match-performance/$matchId': typeof MatchPerformanceMatchIdRoute
   '/payments/$invoiceId': typeof PaymentsInvoiceIdRoute
   '/programs/new': typeof ProgramsNewRoute
-  '/training/$sessionId': typeof TrainingSessionIdRouteWithChildren
   '/assessment': typeof AssessmentIndexRoute
   '/athletes': typeof AthletesIndexRoute
   '/drills': typeof DrillsIndexRoute
@@ -310,6 +309,7 @@ export interface FileRoutesByTo {
   '/training/$sessionId/print': typeof TrainingSessionIdPrintRoute
   '/drills/$drillId': typeof DrillsDrillIdIndexRoute
   '/programs/$programId': typeof ProgramsProgramIdIndexRoute
+  '/training/$sessionId': typeof TrainingSessionIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -337,7 +337,6 @@ export interface FileRoutesById {
   '/match-performance/$matchId': typeof MatchPerformanceMatchIdRoute
   '/payments/$invoiceId': typeof PaymentsInvoiceIdRoute
   '/programs/new': typeof ProgramsNewRoute
-  '/training/$sessionId': typeof TrainingSessionIdRouteWithChildren
   '/assessment/': typeof AssessmentIndexRoute
   '/athletes/': typeof AthletesIndexRoute
   '/drills/': typeof DrillsIndexRoute
@@ -350,6 +349,7 @@ export interface FileRoutesById {
   '/training/$sessionId/print': typeof TrainingSessionIdPrintRoute
   '/drills/$drillId/': typeof DrillsDrillIdIndexRoute
   '/programs/$programId/': typeof ProgramsProgramIdIndexRoute
+  '/training/$sessionId/': typeof TrainingSessionIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -378,7 +378,6 @@ export interface FileRouteTypes {
     | '/match-performance/$matchId'
     | '/payments/$invoiceId'
     | '/programs/new'
-    | '/training/$sessionId'
     | '/assessment/'
     | '/athletes/'
     | '/drills/'
@@ -391,6 +390,7 @@ export interface FileRouteTypes {
     | '/training/$sessionId/print'
     | '/drills/$drillId/'
     | '/programs/$programId/'
+    | '/training/$sessionId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -417,7 +417,6 @@ export interface FileRouteTypes {
     | '/match-performance/$matchId'
     | '/payments/$invoiceId'
     | '/programs/new'
-    | '/training/$sessionId'
     | '/assessment'
     | '/athletes'
     | '/drills'
@@ -430,6 +429,7 @@ export interface FileRouteTypes {
     | '/training/$sessionId/print'
     | '/drills/$drillId'
     | '/programs/$programId'
+    | '/training/$sessionId'
   id:
     | '__root__'
     | '/'
@@ -456,7 +456,6 @@ export interface FileRouteTypes {
     | '/match-performance/$matchId'
     | '/payments/$invoiceId'
     | '/programs/new'
-    | '/training/$sessionId'
     | '/assessment/'
     | '/athletes/'
     | '/drills/'
@@ -469,6 +468,7 @@ export interface FileRouteTypes {
     | '/training/$sessionId/print'
     | '/drills/$drillId/'
     | '/programs/$programId/'
+    | '/training/$sessionId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -496,7 +496,6 @@ export interface RootRouteChildren {
   MatchPerformanceMatchIdRoute: typeof MatchPerformanceMatchIdRoute
   PaymentsInvoiceIdRoute: typeof PaymentsInvoiceIdRoute
   ProgramsNewRoute: typeof ProgramsNewRoute
-  TrainingSessionIdRoute: typeof TrainingSessionIdRouteWithChildren
   AssessmentIndexRoute: typeof AssessmentIndexRoute
   AthletesIndexRoute: typeof AthletesIndexRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
@@ -506,8 +505,10 @@ export interface RootRouteChildren {
   TrainingIndexRoute: typeof TrainingIndexRoute
   DrillsDrillIdEditRoute: typeof DrillsDrillIdEditRoute
   ProgramsProgramIdEditRoute: typeof ProgramsProgramIdEditRoute
+  TrainingSessionIdPrintRoute: typeof TrainingSessionIdPrintRoute
   DrillsDrillIdIndexRoute: typeof DrillsDrillIdIndexRoute
   ProgramsProgramIdIndexRoute: typeof ProgramsProgramIdIndexRoute
+  TrainingSessionIdIndexRoute: typeof TrainingSessionIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -680,13 +681,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssessmentIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/training/$sessionId': {
-      id: '/training/$sessionId'
-      path: '/training/$sessionId'
-      fullPath: '/training/$sessionId'
-      preLoaderRoute: typeof TrainingSessionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/programs/new': {
       id: '/programs/new'
       path: '/programs/new'
@@ -736,6 +730,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssessmentAssessmentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/training/$sessionId/': {
+      id: '/training/$sessionId/'
+      path: '/training/$sessionId'
+      fullPath: '/training/$sessionId/'
+      preLoaderRoute: typeof TrainingSessionIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/programs/$programId/': {
       id: '/programs/$programId/'
       path: '/programs/$programId'
@@ -752,10 +753,10 @@ declare module '@tanstack/react-router' {
     }
     '/training/$sessionId/print': {
       id: '/training/$sessionId/print'
-      path: '/print'
+      path: '/training/$sessionId/print'
       fullPath: '/training/$sessionId/print'
       preLoaderRoute: typeof TrainingSessionIdPrintRouteImport
-      parentRoute: typeof TrainingSessionIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/programs/$programId/edit': {
       id: '/programs/$programId/edit'
@@ -773,17 +774,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface TrainingSessionIdRouteChildren {
-  TrainingSessionIdPrintRoute: typeof TrainingSessionIdPrintRoute
-}
-
-const TrainingSessionIdRouteChildren: TrainingSessionIdRouteChildren = {
-  TrainingSessionIdPrintRoute: TrainingSessionIdPrintRoute,
-}
-
-const TrainingSessionIdRouteWithChildren =
-  TrainingSessionIdRoute._addFileChildren(TrainingSessionIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -810,7 +800,6 @@ const rootRouteChildren: RootRouteChildren = {
   MatchPerformanceMatchIdRoute: MatchPerformanceMatchIdRoute,
   PaymentsInvoiceIdRoute: PaymentsInvoiceIdRoute,
   ProgramsNewRoute: ProgramsNewRoute,
-  TrainingSessionIdRoute: TrainingSessionIdRouteWithChildren,
   AssessmentIndexRoute: AssessmentIndexRoute,
   AthletesIndexRoute: AthletesIndexRoute,
   DrillsIndexRoute: DrillsIndexRoute,
@@ -820,8 +809,10 @@ const rootRouteChildren: RootRouteChildren = {
   TrainingIndexRoute: TrainingIndexRoute,
   DrillsDrillIdEditRoute: DrillsDrillIdEditRoute,
   ProgramsProgramIdEditRoute: ProgramsProgramIdEditRoute,
+  TrainingSessionIdPrintRoute: TrainingSessionIdPrintRoute,
   DrillsDrillIdIndexRoute: DrillsDrillIdIndexRoute,
   ProgramsProgramIdIndexRoute: ProgramsProgramIdIndexRoute,
+  TrainingSessionIdIndexRoute: TrainingSessionIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
