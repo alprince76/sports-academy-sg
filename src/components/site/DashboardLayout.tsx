@@ -72,10 +72,10 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   ],
   coach: [
     { icon: Home, label: "Dashboard", to: "/dashboard" },
-    { icon: BookOpen, label: "Training Programs", to: "/programs" },
     { icon: Shield, label: "Tim", to: "/teams" },
     { icon: Dumbbell, label: "Drill Library", to: "/drills" },
-    { icon: Activity, label: "Training Sessions", to: "/training" },
+    { icon: BookOpen, label: "Training Program", to: "/programs" },
+    { icon: Activity, label: "Training Session", to: "/training" },
     { icon: CalendarCheck, label: "Jadwal & Kalender", to: "/schedule" },
     { icon: Target, label: "Skill Assessment", to: "/assessment" },
     { icon: ScanLine, label: "OCR Import", to: "/assessment/import" },
