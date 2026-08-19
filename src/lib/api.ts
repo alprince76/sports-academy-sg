@@ -22,6 +22,17 @@ export function getAuthToken(): string | null {
 export function setAuthToken(accessToken: string, refreshToken: string, meta?: Record<string, unknown>) {
   localStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: accessToken, refresh_token: refreshToken, ...meta }));
 }
+export function getRefreshToken(): string | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.refresh_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function clearAuthToken() {
   localStorage.removeItem(SESSION_KEY);
 }
@@ -50,9 +61,40 @@ interface ApiOptions extends RequestInit {
   auth?: boolean;
 }
 
+let refreshing: Promise<boolean> | null = null;
+
+/** Refresh access token via backend (POST /auth/refresh). Tunggu single-flight. */
+export async function refreshAuthToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  if (refreshing) return refreshing;
+  refreshing = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (!res.ok) return false;
+      const json = await res.json();
+      const d = json?.data;
+      if (!d?.access_token || !d?.refresh_token) return false;
+      // pertahankan meta user (user_id/email) yang sudah tersimpan
+      const prev = (() => { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "{}"); } catch { return {}; } })();
+      setAuthToken(d.access_token, d.refresh_token, { user_id: prev?.user_id, email: prev?.email });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshing = null;
+    }
+  })();
+  return refreshing;
+}
+
 /**
  * Fetch wrapper ke backend Hono. Default: attach Bearer token (dari localStorage,
- * bukan dari Supabase). Throw ApiError dengan status untuk di-handle caller.
+ * bukan dari Supabase). Auto-refresh saat 401 (sekali retry). Throw ApiError untuk caller.
  */
 export async function api<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
   const { auth = true, headers, ...rest } = options;
@@ -64,7 +106,21 @@ export async function api<T = unknown>(path: string, options: ApiOptions = {}): 
     if (token) h.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...rest, headers: h });
+  let res = await fetch(`${API_URL}${path}`, { ...rest, headers: h });
+
+  // Auto-refresh sekali saat 401 (token kedaluwarsa) — kecuali untuk endpoint auth itu sendiri
+  if (res.status === 401 && auth && !path.startsWith("/auth/log")) {
+    const ok = await refreshAuthToken();
+    if (ok) {
+      const fresh = getAuthToken();
+      if (fresh) {
+        const h2 = new Headers(headers);
+        h2.set("Content-Type", "application/json");
+        if (auth) h2.set("Authorization", `Bearer ${fresh}`);
+        res = await fetch(`${API_URL}${path}`, { ...rest, headers: h2 });
+      }
+    }
+  }
 
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
