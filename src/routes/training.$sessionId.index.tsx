@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
-import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation } from "@/lib/queries";
+import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation, useCreateAssessment } from "@/lib/queries";
 import { getUserIdFromSession } from "@/lib/api";
 import { useSessionList } from "./training.index";
 import {
@@ -233,6 +233,7 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId }: {
   coachId: string;
 }) {
   const createEvaluation = useCreateEvaluation();
+  const createAssessment = useCreateAssessment();
   const [evals, setEvals] = useState<Record<string, SessionSkillEvaluation>>(
     Object.fromEntries(roster.map((a) => [a.id, { ...DEFAULT_SESSION_EVAL }]))
   );
@@ -264,11 +265,25 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId }: {
     };
   };
 
+  // Buat assessment per atlet (skor 1-5, status Draft, period bulan berjalan)
+  const buildAssessmentPayload = (id: string): Record<string, unknown> => {
+    const e = evals[id] ?? DEFAULT_SESSION_EVAL;
+    return {
+      athlete_id: id,
+      period: sessionDate.slice(0, 7),
+      status: "Draft",
+      scores: { ...e },
+      coach_note: (athleteNotes[id] ?? "").trim() || null,
+      recommendations: [],
+    };
+  };
+
   const saveAthlete = async (id: string, name: string) => {
     try {
       await createEvaluation.mutateAsync(buildPayload(id) as any);
+      await createAssessment.mutateAsync(buildAssessmentPayload(id) as any);
       setSaved({ ...saved, [id]: true });
-      toast.success(`Evaluasi ${name} tersimpan`, { description: "6 kategori · tersimpan ke backend" });
+      toast.success(`Evaluasi ${name} tersimpan`, { description: "Disimpan ke timeline + assessment Draft" });
       setTimeout(() => setSaved((s) => ({ ...s, [id]: false })), 1600);
     } catch (e: any) {
       toast.error(e?.message ?? "Gagal simpan evaluasi");
@@ -277,13 +292,19 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId }: {
 
   const saveAll = async () => {
     setSavingAll(true);
+    const active = roster.filter((a) => (a.health?.status ?? "Healthy") !== "Not Available");
     const res = await Promise.all(
-      roster.filter((a) => (a.health?.status ?? "Healthy") !== "Not Available")
-        .map((a) => createEvaluation.mutateAsync(buildPayload(a.id) as any).then(() => true).catch(() => false))
+      active.map(async (a) => {
+        try {
+          await createEvaluation.mutateAsync(buildPayload(a.id) as any);
+          await createAssessment.mutateAsync(buildAssessmentPayload(a.id) as any);
+          return true;
+        } catch { return false; }
+      })
     );
     setSavingAll(false);
     const ok = res.filter(Boolean).length;
-    toast.success(`Evaluasi tersimpan`, { description: `${ok}/${res.length} atlet tersimpan ke backend` });
+    toast.success(`Evaluasi tersimpan`, { description: `${ok}/${res.length} atlet · assessment Draft dibuat` });
   };
 
   return (

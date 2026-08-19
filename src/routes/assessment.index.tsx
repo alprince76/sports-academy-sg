@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadarChart } from "@/components/site/RadarChart";
 import { SKILL_CATEGORIES, SKILL_SCALE } from "@/lib/assessment-data";
-import { Save, FileCheck2, Target, Send, Eye, ScanLine, Trash2 } from "lucide-react";
+import { Save, FileCheck2, Target, Send, Eye, ScanLine, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAthletes, useAssessments, useCreateAssessment, useUpdateAssessment, useDeleteAssessment, type Assessment } from "@/lib/queries";
 
@@ -27,11 +29,18 @@ const STATUS_STYLE: Record<string, string> = {
 
 function AssessmentPage() {
   const { data: athletes = [] } = useAthletes();
-  const athlete = athletes.find((a) => a.name === "Aldi Setiawan") ?? athletes[0];
+  const [athleteId, setAthleteId] = useState<string>("");
+  const athlete = athletes.find((a) => a.id === athleteId) ?? athletes[0];
   const { data: assessments = [], isLoading, isError } = useAssessments(athlete?.id ?? "");
   const updateStatus = useUpdateAssessment();
   const remove = useDeleteAssessment();
   const navigate = Route.useNavigate();
+  const [editing, setEditing] = useState<Assessment | null>(null);
+
+  // set default atlet pertama saat data siap
+  useEffect(() => {
+    if (!athleteId && athletes.length > 0) setAthleteId(athletes[0].id);
+  }, [athletes, athleteId]);
 
   const changeStatus = (a: Assessment, status: "Reviewed" | "Published") => {
     updateStatus.mutate({ id: a.id, status }, {
@@ -51,7 +60,20 @@ function AssessmentPage() {
     <DashboardLayout
       title="Skill Assessment"
       subtitle="Assessment periodik 4–6 minggu. Hanya status 'Published' yang tampil ke orang tua."
-      actions={<Button asChild><Link to="/assessment/import"><ScanLine className="mr-1 h-4 w-4" />Import from Scan (OCR)</Link></Button>}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Atlet:</span>
+            <Select value={athlete?.id ?? ""} onValueChange={setAthleteId}>
+              <SelectTrigger className="w-52"><SelectValue placeholder="Pilih atlet" /></SelectTrigger>
+              <SelectContent>
+                {athletes.map((a) => <SelectItem key={a.id} value={a.id}>{a.name} · {a.team ?? "—"}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button asChild><Link to="/assessment/import"><ScanLine className="mr-1 h-4 w-4" />Import from Scan (OCR)</Link></Button>
+        </div>
+      }
     >
       <Tabs defaultValue="list">
         <TabsList>
@@ -120,6 +142,9 @@ function AssessmentPage() {
                         {p.status === "Published" && (
                           <Badge variant="secondary" className="bg-primary-soft text-[10px] text-primary">Visible ke orang tua</Badge>
                         )}
+                        <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(p)}>
+                          <Pencil className="mr-1 h-3 w-3" />Edit
+                        </Button>
                         <Button size="sm" variant="ghost" className="ml-auto text-xs text-destructive hover:text-destructive" onClick={() => deleteAssessment(p)}>
                           <Trash2 className="mr-1 h-3 w-3" />Hapus
                         </Button>
@@ -141,7 +166,72 @@ function AssessmentPage() {
           <NewAssessmentForm athleteId={athlete?.id ?? ""} athleteName={athlete?.name ?? "Atlet"} team={athlete?.team ?? "—"} />
         </TabsContent>
       </Tabs>
+
+      <EditAssessmentDialog assessment={editing} onClose={() => setEditing(null)} />
     </DashboardLayout>
+  );
+}
+
+/** Modal edit assessment — koreksi skor & catatan sebelum final (Draft/Reviewed). */
+function EditAssessmentDialog({ assessment, onClose }: { assessment: Assessment | null; onClose: () => void }) {
+  const update = useUpdateAssessment();
+  const [scores, setScores] = useState<Record<string, number>>(() => ({ ...(assessment?.scores ?? {}) }));
+  const [note, setNote] = useState(assessment?.coach_note ?? "");
+  const [saving, setSaving] = useState(false);
+
+  // sync saat berganti assessment
+  const [prevId, setPrevId] = useState<string | null>(null);
+  if (assessment && assessment.id !== prevId) {
+    setPrevId(assessment.id);
+    setScores({ ...(assessment.scores ?? {}) });
+    setNote(assessment.coach_note ?? "");
+  }
+
+  const saveDraft = (status: "Draft" | "Reviewed" | "Published") => {
+    if (!assessment) return;
+    setSaving(true);
+    update.mutate({
+      id: assessment.id,
+      scores,
+      coach_note: note.trim() || null,
+      status,
+    } as any, {
+      onSuccess: () => { toast.success("Assessment diperbarui"); setSaving(false); onClose(); },
+      onError: (e: any) => { toast.error(e?.message ?? "Gagal menyimpan"); setSaving(false); },
+    });
+  };
+
+  return (
+    <Dialog open={!!assessment} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Edit Assessment</DialogTitle></DialogHeader>
+        <p className="text-xs text-muted-foreground">Koreksi skor bila ada human error sebelum final. Skala 1–5.</p>
+        <div className="mt-2 space-y-4">
+          {SKILL_CATEGORIES.map((c) => (
+            <div key={c}>
+              <div className="mb-2 flex justify-between text-sm">
+                <span className="font-medium">{c}</span>
+                <span className="font-display text-base font-bold text-primary">{scores[c] ?? 3} · {SKILL_SCALE[(scores[c] ?? 3) - 1]?.label}</span>
+              </div>
+              <Slider value={[scores[c] ?? 3]} min={1} max={5} step={1} onValueChange={([v]) => setScores({ ...scores, [c]: v })} />
+            </div>
+          ))}
+          <div>
+            <p className="mb-2 text-sm font-medium">Coach Note</p>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-20" />
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
+          <Button variant="outline" onClick={() => saveDraft("Reviewed")} disabled={saving}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileCheck2 className="mr-1 h-4 w-4" />}Simpan & Review
+          </Button>
+          <Button onClick={() => saveDraft("Draft")} disabled={saving}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}Simpan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
