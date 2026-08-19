@@ -73,6 +73,45 @@ function CoachScheduleView() {
       )}
       <Card className="border-border/70">
         <CardContent className="p-0">
+          {/* MOBILE: list vertikal per hari */}
+          <div className="divide-y divide-border sm:hidden">
+            {weekDays.map((date, dayIdx) => {
+              const dayEvents = sessions
+                .filter((s) => s.session_date === date)
+                .sort((a, b) => (a.start_time || "00:00").localeCompare(b.start_time || "00:00"));
+              const today = new Date().toISOString().slice(0, 10);
+              const isToday = date === today;
+              return (
+                <div key={dayIdx} className={`p-3 ${isToday ? "bg-emerald-50" : ""}`}>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <p className={`text-sm font-bold ${isToday ? "text-emerald-700" : ""}`}>
+                      {DAYS[dayIdx]} · {date.slice(8)} {date.slice(5, 7)}
+                    </p>
+                    {isToday && <Badge variant="secondary" className="text-[9px]">Hari ini</Badge>}
+                  </div>
+                  {dayEvents.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/50">Tidak ada sesi.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {dayEvents.map((s: Session) => (
+                        <div key={s.id} className="rounded-md border border-primary/30 bg-white/60 p-2.5">
+                          <p className="text-xs font-bold text-primary">{fmt(s.start_time)} – {fmt(s.end_time)}</p>
+                          <p className="mt-0.5 truncate text-sm font-semibold">{s.title}</p>
+                          <p className="truncate text-[11px] text-muted-foreground">{progName(s.program_id)}</p>
+                          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <Users className="h-3 w-3" /> {progCoach(s.program_id)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP: kalender 7 kolom */}
+          <div className="hidden sm:block">
           <div className="grid grid-cols-7 border-b border-border bg-secondary/50">
             {DAYS.map((d, i) => {
               const today = new Date().toISOString().slice(0, 10);
@@ -108,6 +147,7 @@ function CoachScheduleView() {
                 </div>
               );
             })}
+          </div>
           </div>
         </CardContent>
       </Card>
@@ -157,6 +197,37 @@ function GenericScheduleView() {
       )}
       <Card className="border-border/70">
         <CardContent className="p-0">
+          {/* MOBILE: list vertikal per hari */}
+          <div className="divide-y divide-border sm:hidden">
+            {DAYS.map((d, i) => {
+              const dayEvents = events.filter((e) => e.day === i + 1);
+              return (
+                <div key={d} className="p-3">
+                  <div className="mb-1.5">
+                    <p className="text-sm font-bold text-foreground">{d}</p>
+                  </div>
+                  {dayEvents.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/50">Tidak ada jadwal.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {dayEvents.map((e) => (
+                        <button key={e.id} onClick={() => setSelected(e)} className={`w-full rounded-md border p-2.5 text-left ${e.type === "match" ? "border-amber-300 bg-amber-50" : e.type === "meeting" ? "border-purple-300 bg-purple-50" : "border-primary/30 bg-primary/5"}`}>
+                          <p className="flex items-center gap-1 text-xs font-bold">{e.time?.slice(0, 5)} <Clock className="h-3 w-3" /></p>
+                          <p className="mt-0.5 truncate text-sm font-semibold">{e.title}</p>
+                          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+                            <MapPin className="h-3 w-3" /> {e.venue || "—"}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP: kalender 7 kolom */}
+          <div className="hidden sm:block">
           <div className="grid grid-cols-7 border-b border-border bg-secondary/50">
             {DAYS.map((d, i) => (
               <div key={d} className="border-r border-border p-3 text-center last:border-r-0">
@@ -183,6 +254,7 @@ function GenericScheduleView() {
                 ))}
               </div>
             ))}
+          </div>
           </div>
         </CardContent>
       </Card>
