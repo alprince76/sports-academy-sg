@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { UserCog, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useAdminUsers, useAssignUserRole, useCreateAdminUser, useDeleteAdminUser } from "@/lib/queries";
 
 export const Route = createFileRoute("/user-management")({
@@ -86,12 +87,14 @@ function UserManagementPage() {
                     <td className="px-5 py-3.5">
                       <RoleSelect
                         value={u.role}
-                        onChange={(role) =>
+                        onChange={async (role) => {
+                          const confirmed = await confirmAction({ title: "Ganti role?", text: `Ubah role ${u.full_name} menjadi ${ROLE_LABELS[role] ?? role}?`, confirmText: "Ya, Ganti", danger: false });
+                          if (!confirmed) return;
                           assign.mutate({ userId: u.id, role }, {
-                            onSuccess: () => toast.success(`${u.full_name} → ${ROLE_LABELS[role] ?? role}`),
-                            onError: (e: any) => toast.error(e?.message ?? "Gagal ganti role"),
-                          })
-                        }
+                            onSuccess: () => notifySuccess({ title: "Role diperbarui", text: `${u.full_name} → ${ROLE_LABELS[role] ?? role}` }),
+                            onError: (e: any) => notifyError({ title: "Gagal ganti role", text: e?.message }),
+                          });
+                        }}
                       />
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground">
@@ -102,11 +105,12 @@ function UserManagementPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => {
-                          if (!confirm(`Hapus user ${u.full_name}?`)) return;
+                        onClick={async () => {
+                          const confirmed = await confirmAction({ title: `Hapus user ${u.full_name}?`, text: "Data user dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+                          if (!confirmed) return;
                           remove.mutate(u.id, {
-                            onSuccess: () => toast.success("User dihapus"),
-                            onError: (e: any) => toast.error(e?.message ?? "Gagal hapus"),
+                            onSuccess: () => notifySuccess({ title: "Terhapus", text: "User dihapus" }),
+                            onError: (e: any) => notifyError({ title: "Gagal hapus", text: e?.message }),
                           });
                         }}
                         disabled={u.role === "superadmin" || remove.isPending}
@@ -153,18 +157,20 @@ function AddUserDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v
   const [role, setRole] = useState("parent");
   const create = useCreateAdminUser();
 
-  const submit = () => {
+  const submit = async () => {
     if (!email.trim() || !fullName.trim() || password.length < 8) {
       toast.error("Email, nama wajib diisi & password min 8 karakter");
       return;
     }
+    const confirmed = await confirmAction({ title: "Buat user?", text: `Buat user ${email} sebagai ${ROLE_LABELS[role]}?`, confirmText: "Ya, Buat", danger: false });
+    if (!confirmed) return;
     create.mutate({ email: email.trim(), password, full_name: fullName.trim(), role }, {
       onSuccess: () => {
-        toast.success(`User ${email} dibuat sebagai ${ROLE_LABELS[role]}`);
+        notifySuccess({ title: "User dibuat", text: `User ${email} dibuat sebagai ${ROLE_LABELS[role]}` });
         onOpenChange(false);
         setEmail(""); setPassword(""); setFullName(""); setRole("parent");
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal membuat user"),
+      onError: (e: any) => notifyError({ title: "Gagal membuat user", text: e?.message }),
     });
   };
 

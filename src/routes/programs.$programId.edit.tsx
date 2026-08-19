@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { ProgramForm, formFromProgram } from "@/components/site/ProgramForm";
 import { useProgramDetail, useUpdateProgram } from "@/lib/queries";
 
@@ -36,14 +36,16 @@ function EditProgramPage() {
   if (!program) throw notFound();
 
   const submit = (payload: Record<string, unknown>) => {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
+      const ok = await confirmAction({ title: "Simpan perubahan?", text: "Perubahan program akan disimpan.", danger: false });
+      if (!ok) { resolve(); return; }
       update.mutate({ id: program.id, ...payload } as any, {
         onSuccess: () => {
-          toast.success("Program diperbarui", { description: String(payload.title) });
+          notifySuccess({ title: "Tersimpan", text: "Program diperbarui" });
           setTimeout(() => navigate({ to: "/programs/$programId", params: { programId: program.id } }), 600);
           resolve();
         },
-        onError: (e: any) => reject(e),
+        onError: (e: any) => { notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal menyimpan program" }); reject(e); },
       });
     });
   };

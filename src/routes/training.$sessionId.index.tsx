@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
 import { useAthletes, useDeleteSession, useCreateAttendance, useCreateEvaluation, useCreateAssessment, useSessionEvaluations, useSessionAttendance, type Evaluation, type AttendanceRecord } from "@/lib/queries";
 import { getUserIdFromSession } from "@/lib/api";
@@ -98,8 +99,10 @@ function SessionPage() {
     setPrefilledAtt(true);
   }, [sessionAttQ.isSuccess, sessionEvalsQ.isSuccess, roster, attendanceByAthlete, evalByAthlete, sessionAttendance, prefilledAtt]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!session || roster.length === 0) return;
+    const confirmed = await confirmAction({ title: "Simpan kehadiran?", text: "Simpan kehadiran & evaluasi ke backend?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     setSaving(true);
     const sessionDate = session.session_date ?? new Date().toISOString().slice(0, 10);
     const coachId = getUserIdFromSession() ?? userId;
@@ -130,19 +133,21 @@ function SessionPage() {
     Promise.all([...attPromises, ...evalPromises]).then(() => {
       setSaving(false);
       setSaved(true);
-      toast.success("Kehadiran & evaluasi tersimpan", { description: `${roster.length} atlet disimpan ke backend` });
+      notifySuccess({ title: "Tersimpan", text: `${roster.length} atlet disimpan ke backend` });
       setTimeout(() => setSaved(false), 2000);
     });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!session) return;
+    const confirmed = await confirmAction({ title: "Hapus sesi?", text: "Sesi dan datanya akan dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!confirmed) return;
     remove.mutate(session.id, {
       onSuccess: () => {
-        toast.success("Sesi dihapus");
+        notifySuccess({ title: "Terhapus", text: "Sesi dihapus" });
         navigate({ to: "/training" });
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus sesi"),
+      onError: (e: any) => notifyError({ title: "Gagal menghapus sesi", text: e?.message }),
     });
   };
 
@@ -357,18 +362,22 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, pr
   };
 
   const saveAthlete = async (id: string, name: string) => {
+    const confirmed = await confirmAction({ title: "Simpan evaluasi?", text: `Simpan evaluasi ${name}?`, confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     try {
       await createEvaluation.mutateAsync(buildPayload(id) as any);
       await createAssessment.mutateAsync(buildAssessmentPayload(id) as any);
       setSaved({ ...saved, [id]: true });
-      toast.success(`Evaluasi ${name} tersimpan`, { description: "Disimpan ke timeline + assessment Draft" });
+      notifySuccess({ title: "Tersimpan", text: `Evaluasi ${name} disimpan ke timeline + assessment Draft` });
       setTimeout(() => setSaved((s) => ({ ...s, [id]: false })), 1600);
     } catch (e: any) {
-      toast.error(e?.message ?? "Gagal simpan evaluasi");
+      notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal simpan evaluasi" });
     }
   };
 
   const saveAll = async () => {
+    const confirmed = await confirmAction({ title: "Simpan semua?", text: "Simpan evaluasi & assessment Draft untuk semua atlet?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     setSavingAll(true);
     const active = roster.filter((a) => (a.health?.status ?? "Healthy") !== "Not Available");
     const res = await Promise.all(
@@ -381,8 +390,8 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, pr
       })
     );
     setSavingAll(false);
-    const ok = res.filter(Boolean).length;
-    toast.success(`Evaluasi tersimpan`, { description: `${ok}/${res.length} atlet · assessment Draft dibuat` });
+    const okCount = res.filter(Boolean).length;
+    notifySuccess({ title: "Tersimpan", text: `${okCount}/${res.length} atlet · assessment Draft dibuat` });
   };
 
   return (

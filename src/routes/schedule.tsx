@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, MapPin, Clock, Trash2, Pencil, Save, Loader2, CalendarRange, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, useSessions, usePrograms, type Schedule, type Session } from "@/lib/queries";
 import { getRole } from "@/lib/role";
 
@@ -294,7 +295,14 @@ function DeleteScheduleDialog({ open, onOpenChange, schedule, onDeleted }: {
         <p className="text-sm">Yakin ingin menghapus <span className="font-semibold">{schedule.title}</span>?</p>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button variant="destructive" onClick={() => remove.mutate(schedule.id, { onSuccess: () => { toast.success("Jadwal dihapus"); onOpenChange(false); onDeleted(); } })}>
+          <Button variant="destructive" onClick={async () => {
+            const confirmed = await confirmAction({ title: "Hapus jadwal?", text: `Hapus jadwal "${schedule.title}"? Data dihapus permanen.`, confirmText: "Ya, Hapus", danger: true });
+            if (!confirmed) return;
+            remove.mutate(schedule.id, {
+              onSuccess: () => { notifySuccess({ title: "Terhapus", text: "Jadwal dihapus" }); onOpenChange(false); onDeleted(); },
+              onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message }),
+            });
+          }}>
             <Trash2 className="mr-1 h-4 w-4" />Hapus
           </Button>
         </DialogFooter>
@@ -328,12 +336,14 @@ function ScheduleFormDialog({ open, onOpenChange, schedule }: {
     setVenue(schedule.venue ?? "");
   }
 
-  const save = () => {
+  const save = async () => {
     if (!title.trim()) { toast.error("Judul wajib diisi"); return; }
+    const confirmed = await confirmAction({ title: "Simpan perubahan?", text: isEdit ? "Simpan perubahan jadwal?" : "Tambahkan jadwal baru?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     setSaving(true);
     const payload = { title, day: Number(day), time, type, venue: venue || null } as any;
-    const onSuccess = () => { toast.success(isEdit ? "Jadwal diperbarui" : "Jadwal ditambahkan"); setSaving(false); onOpenChange(false); };
-    const onError = (e: any) => { toast.error(e?.message ?? "Gagal simpan"); setSaving(false); };
+    const onSuccess = () => { notifySuccess({ title: "Tersimpan", text: isEdit ? "Jadwal diperbarui" : "Jadwal ditambahkan" }); setSaving(false); onOpenChange(false); };
+    const onError = (e: any) => { notifyError({ title: "Gagal menyimpan", text: e?.message }); setSaving(false); };
     if (isEdit && schedule) update.mutate({ id: schedule.id, ...payload } as any, { onSuccess, onError });
     else create.mutate(payload, { onSuccess, onError });
   };

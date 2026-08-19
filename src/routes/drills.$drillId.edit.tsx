@@ -3,9 +3,9 @@ import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { useDrills, useUpdateDrill } from "@/lib/queries";
 import { DrillForm, toDrillForm, fromDrillForm, type DrillFormValue } from "@/components/site/DrillForm";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 
 export const Route = createFileRoute("/drills/$drillId/edit")({
   head: () => ({ meta: [{ title: "Edit Drill — SportAcademy" }] }),
@@ -31,13 +31,15 @@ function EditDrillPage() {
   }
   if (!drill) throw notFound();
 
-  const save = (form: DrillFormValue) => {
+  const save = async (form: DrillFormValue) => {
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Perubahan drill akan disimpan.", danger: false });
+    if (!ok) return;
     update.mutate({ id: drill.id, ...fromDrillForm(form) } as any, {
       onSuccess: () => {
-        toast.success("Drill diperbarui");
+        notifySuccess({ title: "Tersimpan", text: "Drill diperbarui" });
         navigate({ to: "/drills/$drillId", params: { drillId: drill.id } });
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui drill"),
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
     });
   };
 

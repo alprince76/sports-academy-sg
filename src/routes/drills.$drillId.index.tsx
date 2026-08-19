@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Clock, Dumbbell, Zap, Pencil, Trash2, Save, Loader2, ListChecks } from "lucide-react";
-import { toast } from "sonner";
 import { useDrills, useDeleteDrill } from "@/lib/queries";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 
 export const Route = createFileRoute("/drills/$drillId/")({
   head: () => ({ meta: [{ title: "Detail Drill — SportAcademy" }] }),
@@ -151,13 +151,15 @@ function DeleteDrillDialog({ drill, open, onClose }: { drill: any; open: boolean
   const navigate = Route.useNavigate();
   const remove = useDeleteDrill();
 
-  const confirm = () => {
+  const confirm = async () => {
+    const ok = await confirmAction({ title: `Hapus "${drill.title}"?`, text: "Data dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!ok) return;
     remove.mutate(drill.id, {
       onSuccess: () => {
-        toast.success(`Drill "${drill.title}" dihapus`);
+        notifySuccess({ title: "Terhapus", text: `Drill "${drill.title}" dihapus` });
         navigate({ to: "/drills" });
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message }),
     });
   };
 

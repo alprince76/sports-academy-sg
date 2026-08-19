@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Save, X, Plus, Clock, Loader2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useQueryClient } from "@tanstack/react-query";
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
 import { BLOCK_META } from "@/lib/training-data";
@@ -136,8 +137,10 @@ export function SessionBuilderModal({
   };
   const removeDrill = (block: BlockId, id: string) => setBlocks((prev) => ({ ...prev, [block]: (prev[block] ?? []).filter((x) => x !== id) }));
 
-  const saveSession = () => {
+  const saveSession = async () => {
     if (!isEdit && totalDrills === 0) { toast.error("Tambahkan minimal 1 drill dulu"); return; }
+    const confirmed = await confirmAction({ title: "Simpan perubahan?", text: isEdit ? "Simpan perubahan sesi?" : "Simpan sesi baru?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     setSaving(true);
     const validBlocks = BLOCK_ORDER.filter((b) => (blocks[b] ?? []).length > 0).map((b) => ({
       category: b,
@@ -153,14 +156,14 @@ export function SessionBuilderModal({
       blocks: validBlocks,
     } as any;
     const onSuccess = () => {
-      toast.success(isEdit ? "Sesi diperbarui" : "Sesi tersimpan");
+      notifySuccess({ title: "Tersimpan", text: isEdit ? "Sesi diperbarui" : "Sesi tersimpan" });
       setSaving(false);
       resetForm();
       qc.invalidateQueries({ queryKey: ["program", programId] });
       qc.invalidateQueries({ queryKey: ["sessions"] });
       onOpenChange(false);
     };
-    const onError = (e: any) => { toast.error(e?.message ?? "Gagal simpan"); setSaving(false); };
+    const onError = (e: any) => { notifyError({ title: "Gagal menyimpan", text: e?.message }); setSaving(false); };
 
     if (isEdit && editSession?.id) {
       updateSession.mutate({ id: editSession.id, ...payload } as any, { onSuccess, onError });

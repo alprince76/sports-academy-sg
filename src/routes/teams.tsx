@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Users, Plus, Loader2, Pencil, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useTeams, useCreateTeam, useUpdateTeam, useDeleteTeam } from "@/lib/queries";
 import { useRole } from "@/lib/role";
 
@@ -90,11 +90,13 @@ function CreateTeamDialog({ open, onClose }: { open: boolean; onClose: () => voi
   const [ageGroup, setAgeGroup] = useState("");
   const [desc, setDesc] = useState("");
 
-  const submit = () => {
-    if (!name.trim()) { toast.error("Nama tim wajib diisi"); return; }
+  const submit = async () => {
+    if (!name.trim()) { notifyError({ title: "Nama tim wajib diisi" }); return; }
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Tim baru akan dibuat.", danger: false });
+    if (!ok) return;
     create.mutate({ name: name.trim(), age_group: ageGroup || null, description: desc || null } as any, {
-      onSuccess: () => { toast.success("Tim dibuat"); setName(""); setAgeGroup(""); setDesc(""); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal membuat tim"),
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Tim dibuat" }); setName(""); setAgeGroup(""); setDesc(""); onClose(); },
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal membuat tim" }),
     });
   };
 
@@ -134,11 +136,13 @@ function EditTeamDialog({ team, onClose }: { team: any; onClose: () => void }) {
     setPrevKey(team.id); setName(team.name); setAgeGroup(team.age_group ?? ""); setDesc(team.description ?? "");
   }
 
-  const submit = () => {
-    if (!name.trim()) { toast.error("Nama tim wajib diisi"); return; }
+  const submit = async () => {
+    if (!name.trim()) { notifyError({ title: "Nama tim wajib diisi" }); return; }
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Perubahan data tim akan disimpan.", danger: false });
+    if (!ok) return;
     update.mutate({ id: team.id, name: name.trim(), age_group: ageGroup || null, description: desc || null } as any, {
-      onSuccess: () => { toast.success("Tim diperbarui"); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui"),
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Tim diperbarui" }); onClose(); },
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal memperbarui" }),
     });
   };
 
@@ -168,10 +172,12 @@ function EditTeamDialog({ team, onClose }: { team: any; onClose: () => void }) {
 
 function DeleteTeamDialog({ team, onClose }: { team: any; onClose: () => void }) {
   const remove = useDeleteTeam();
-  const confirm = () => {
+  const confirm = async () => {
+    const ok = await confirmAction({ title: "Hapus tim ini?", text: "Data tim dihapus permanen. Atlet dalam tim akan menjadi tanpa tim.", confirmText: "Ya, Hapus", danger: true });
+    if (!ok) return;
     remove.mutate(team.id, {
-      onSuccess: () => { toast.success(`Tim "${team.name}" dihapus`); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+      onSuccess: () => { notifySuccess({ title: "Terhapus", text: `Tim "${team.name}" dihapus` }); onClose(); },
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message ?? "Gagal menghapus" }),
     });
   };
   return (

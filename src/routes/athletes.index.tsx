@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useAthletes, useCreateAthlete, useUpdateAthlete, useDeleteAthlete, useTeams, type Athlete } from "@/lib/queries";
 import { TEAMS, POSITIONS } from "@/lib/demo-data";
 
@@ -156,12 +156,14 @@ function AddAthleteDialog() {
   const { data: teams = [] } = useTeams();
   const create = useCreateAthlete();
 
-  const submit = () => {
-    if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
+  const submit = async () => {
+    if (!name.trim()) { notifyError({ title: "Nama wajib diisi" }); return; }
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Atlet baru akan ditambahkan ke akademi.", danger: false });
+    if (!ok) return;
     const t = teams.find((x) => x.id === teamId);
     create.mutate({ name: name.trim(), position: position || null, team: t?.name ?? null, team_id: teamId || null }, {
-      onSuccess: () => { toast.success("Atlet berhasil ditambahkan"); setOpen(false); setName(""); setPosition(""); setTeamId(""); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menambah atlet"),
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Atlet berhasil ditambahkan" }); setOpen(false); setName(""); setPosition(""); setTeamId(""); },
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal menambah atlet" }),
     });
   };
 
@@ -219,13 +221,15 @@ function EditAthleteDialog({ athlete, onClose }: { athlete: Athlete | null; onCl
     setTeamId(athlete.team_id ?? "");
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!athlete) return;
-    if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
+    if (!name.trim()) { notifyError({ title: "Nama wajib diisi" }); return; }
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Perubahan data atlet akan disimpan.", danger: false });
+    if (!ok) return;
     const t = teams.find((x) => x.id === teamId);
     update.mutate({ id: athlete.id, name: name.trim(), position: position || null, team: t?.name ?? null, team_id: teamId || null }, {
-      onSuccess: () => { toast.success("Atlet berhasil diperbarui"); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui atlet"),
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Atlet berhasil diperbarui" }); onClose(); },
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal memperbarui atlet" }),
     });
   };
 
@@ -267,11 +271,13 @@ function EditAthleteDialog({ athlete, onClose }: { athlete: Athlete | null; onCl
 function DeleteAthleteDialog({ athlete, onClose }: { athlete: Athlete | null; onClose: () => void }) {
   const remove = useDeleteAthlete();
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!athlete) return;
+    const ok = await confirmAction({ title: "Hapus atlet ini?", text: "Data atlet dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!ok) return;
     remove.mutate(athlete.id, {
-      onSuccess: () => { toast.success(`Atlet "${athlete.name}" dihapus`); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus atlet"),
+      onSuccess: () => { notifySuccess({ title: "Terhapus", text: `Atlet "${athlete.name}" dihapus` }); onClose(); },
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message ?? "Gagal menghapus atlet" }),
     });
   };
 

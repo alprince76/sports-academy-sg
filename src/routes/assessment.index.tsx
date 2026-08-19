@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiData } from "@/lib/api";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useAthletes, useAssessments, useCreateAssessment, useUpdateAssessment, useDeleteAssessment, type Assessment } from "@/lib/queries";
 
 export const Route = createFileRoute("/assessment/")({
@@ -46,17 +47,21 @@ function AssessmentPage() {
     if (!athleteId && athletes.length > 0) setAthleteId(athletes[0].id);
   }, [athletes, athleteId]);
 
-  const changeStatus = (a: Assessment, status: "Reviewed" | "Published") => {
+  const changeStatus = async (a: Assessment, status: "Reviewed" | "Published") => {
+    const confirmed = await confirmAction({ title: "Ubah status?", text: `Ubah status ${a.athletes?.name ?? "Atlet"} menjadi ${status}?`, confirmText: "Ya, Ubah", danger: false });
+    if (!confirmed) return;
     updateStatus.mutate({ id: a.id, status }, {
-      onSuccess: () => toast.success(`${a.athletes?.name ?? "Atlet"} → ${status}`, { description: status === "Published" ? "Visible di Parent Portal" : undefined }),
-      onError: (e: any) => toast.error(e?.message ?? "Gagal ubah status"),
+      onSuccess: () => notifySuccess({ title: "Status diperbarui", text: `${a.athletes?.name ?? "Atlet"} → ${status}` }),
+      onError: (e: any) => notifyError({ title: "Gagal mengubah status", text: e?.message }),
     });
   };
 
-  const deleteAssessment = (a: Assessment) => {
+  const deleteAssessment = async (a: Assessment) => {
+    const confirmed = await confirmAction({ title: "Hapus assessment?", text: "Data assessment dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!confirmed) return;
     remove.mutate(a.id, {
-      onSuccess: () => toast.success("Assessment dihapus"),
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+      onSuccess: () => notifySuccess({ title: "Terhapus", text: "Assessment dihapus" }),
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message }),
     });
   };
 
@@ -212,8 +217,10 @@ function BatchEditDialog({ open, onClose }: { open: boolean; onClose: () => void
   const ids = Object.keys(loaded);
   const selIds = ids.filter((id) => selected[id]);
 
-  const applyToAll = () => {
+  const applyToAll = async () => {
     if (selIds.length === 0) { toast.info("Pilih minimal 1 assessment"); return; }
+    const confirmed = await confirmAction({ title: "Terapkan koreksi?", text: `Perbarui ${selIds.length} assessment terpilih?`, confirmText: "Ya, Terapkan", danger: false });
+    if (!confirmed) return;
     setSaving(true);
     Promise.all(selIds.map((id) =>
       update.mutateAsync({ id, scores, coach_note: note.trim() || null } as any)
@@ -221,7 +228,7 @@ function BatchEditDialog({ open, onClose }: { open: boolean; onClose: () => void
     )).then((res) => {
       const ok = res.filter(Boolean).length;
       setSaving(false);
-      toast.success(`Batch selesai`, { description: `${ok}/${selIds.length} assessment diperbarui` });
+      notifySuccess({ title: "Batch selesai", text: `${ok}/${selIds.length} assessment diperbarui` });
       setSelected({});
       setNote("");
       qc.invalidateQueries({ queryKey: ["assessments"] });
@@ -304,8 +311,10 @@ function EditAssessmentDialog({ assessment, onClose }: { assessment: Assessment 
     setNote(assessment.coach_note ?? "");
   }
 
-  const saveDraft = (status: "Draft" | "Reviewed" | "Published") => {
+  const saveDraft = async (status: "Draft" | "Reviewed" | "Published") => {
     if (!assessment) return;
+    const confirmed = await confirmAction({ title: "Simpan perubahan?", text: "Simpan perubahan assessment?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     setSaving(true);
     update.mutate({
       id: assessment.id,
@@ -313,8 +322,8 @@ function EditAssessmentDialog({ assessment, onClose }: { assessment: Assessment 
       coach_note: note.trim() || null,
       status,
     } as any, {
-      onSuccess: () => { toast.success("Assessment diperbarui"); setSaving(false); onClose(); },
-      onError: (e: any) => { toast.error(e?.message ?? "Gagal menyimpan"); setSaving(false); },
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Assessment diperbarui" }); setSaving(false); onClose(); },
+      onError: (e: any) => { notifyError({ title: "Gagal menyimpan", text: e?.message }); setSaving(false); },
     });
   };
 
@@ -359,8 +368,10 @@ function NewAssessmentForm({ athleteId, athleteName, team }: { athleteId: string
   const [note, setNote] = useState("");
   const create = useCreateAssessment();
 
-  const submit = (status: "Draft" | "Reviewed" | "Published") => {
+  const submit = async (status: "Draft" | "Reviewed" | "Published") => {
     if (!athleteId) { toast.error("Belum ada atlet"); return; }
+    const confirmed = await confirmAction({ title: "Simpan perubahan?", text: `Simpan assessment sebagai ${status}?`, confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     create.mutate({
       athlete_id: athleteId,
       period: new Date().toISOString().slice(0, 7),
@@ -369,8 +380,8 @@ function NewAssessmentForm({ athleteId, athleteName, team }: { athleteId: string
       coach_note: note || null,
       recommendations: [],
     }, {
-      onSuccess: () => toast.success(`Assessment ${status === "Published" ? "dipublish" : status.toLowerCase()}`),
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan"),
+      onSuccess: () => notifySuccess({ title: "Tersimpan", text: `Assessment ${status === "Published" ? "dipublish" : status.toLowerCase()}` }),
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
     });
   };
 

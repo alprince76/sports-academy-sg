@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, CreditCard, Loader2, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { useInvoiceDetail, useUpdateInvoice, useDeleteInvoice } from "@/lib/queries";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 
 export const Route = createFileRoute("/payments/$invoiceId")({
   head: () => ({ meta: [{ title: "Detail Invoice — SportAcademy" }] }),
@@ -48,18 +48,22 @@ function InvoiceDetailPage() {
   }
   if (!inv) throw notFound();
 
-  const changeStatus = (s: string) => {
+  const changeStatus = async (s: string) => {
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: `Ubah status invoice menjadi ${s}?`, danger: false });
+    if (!ok) return;
     setStatus(s);
     update.mutate({ id: inv.id, status: s as any }, {
-      onSuccess: () => { toast.success(`Status → ${s}`); setStatus(null); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal ubah status"),
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: `Status → ${s}` }); setStatus(null); },
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
     });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    const ok = await confirmAction({ title: "Hapus invoice?", text: "Data dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!ok) return;
     remove.mutate(inv.id, {
-      onSuccess: () => { toast.success("Invoice dihapus"); navigate({ to: "/payments" }); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+      onSuccess: () => { notifySuccess({ title: "Terhapus", text: "Invoice dihapus" }); navigate({ to: "/payments" }); },
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message }),
     });
   };
 

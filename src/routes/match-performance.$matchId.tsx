@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Trophy, Loader2, Pencil, Trash2, Save } from "lucide-react";
-import { toast } from "sonner";
 import { useMatchDetail, useUpdateMatchStat, useDeleteMatchStat } from "@/lib/queries";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 
 export const Route = createFileRoute("/match-performance/$matchId")({
   head: () => ({ meta: [{ title: "Detail Match — SportAcademy" }] }),
@@ -133,12 +133,14 @@ function EditMatchDialog({ match, open, onClose }: { match: any; open: boolean; 
   const [opponent, setOpponent] = useState(match.opponent ?? "");
   const update = useUpdateMatchStat();
 
-  const submit = () => {
+  const submit = async () => {
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Statistik match akan diperbarui.", danger: false });
+    if (!ok) return;
     const payload: Record<string, any> = { opponent: opponent || null, min: Number(min) || 0 };
     for (const f of NUM_FIELDS) payload[f.key] = Number(vals[f.key]) || 0;
     update.mutate({ id: match.id, ...payload }, {
-      onSuccess: () => { toast.success("Statistik match diperbarui (PIR auto-hitung)"); onClose(); },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal memperbarui"),
+      onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Statistik match diperbarui (PIR auto-hitung)" }); onClose(); },
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
     });
   };
 
@@ -174,13 +176,15 @@ function DeleteMatchDialog({ match, open, onClose }: { match: any; open: boolean
   const navigate = Route.useNavigate();
   const remove = useDeleteMatchStat();
 
-  const confirm = () => {
+  const confirm = async () => {
+    const ok = await confirmAction({ title: "Hapus match?", text: "Data dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!ok) return;
     remove.mutate(match.id, {
       onSuccess: () => {
-        toast.success("Match dihapus");
+        notifySuccess({ title: "Terhapus", text: "Match dihapus" });
         navigate({ to: "/match-performance" });
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message }),
     });
   };
 

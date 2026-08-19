@@ -2,9 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
 import { useCreateDrill } from "@/lib/queries";
 import { DrillForm, toDrillForm, fromDrillForm, type DrillFormValue } from "@/components/site/DrillForm";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 
 export const Route = createFileRoute("/drills/new")({
   head: () => ({ meta: [{ title: "Create Drill — SportAcademy" }] }),
@@ -15,13 +15,15 @@ function CreateDrillPage() {
   const navigate = useNavigate();
   const create = useCreateDrill();
 
-  const save = (form: DrillFormValue) => {
+  const save = async (form: DrillFormValue) => {
+    const ok = await confirmAction({ title: "Simpan perubahan?", text: "Draft drill akan disimpan ke library.", danger: false });
+    if (!ok) return;
     create.mutate(fromDrillForm(form) as any, {
       onSuccess: () => {
-        toast.success("Drill tersimpan ke backend", { description: form.title });
+        notifySuccess({ title: "Tersimpan", text: form.title });
         setTimeout(() => navigate({ to: "/drills" }), 600);
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan drill"),
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
     });
   };
 

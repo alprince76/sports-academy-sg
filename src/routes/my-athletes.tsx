@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { Loader2, TrendingUp, Trophy } from "lucide-react";
 import { useAthletes, useProgressTrend, useMatchSummary, useCreateProgress } from "@/lib/queries";
 
@@ -27,13 +28,15 @@ function MyAthletesPage() {
   const { data: trend } = useProgressTrend(current?.id ?? "");
   const { data: matchSum } = useMatchSummary(current?.id ?? "");
 
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!current || !note.trim()) return;
+    const confirmed = await confirmAction({ title: "Simpan catatan?", text: "Simpan catatan ke riwayat progress atlet?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     createProgress.mutate(
       { athlete_id: current.id, overall: current.progress ?? 0, note: note.trim() },
       {
-        onSuccess: () => { toast.success("Catatan tersimpan ke riwayat progress"); setNote(""); },
-        onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan"),
+        onSuccess: () => { notifySuccess({ title: "Tersimpan", text: "Catatan tersimpan ke riwayat progress" }); setNote(""); },
+        onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
       }
     );
   };

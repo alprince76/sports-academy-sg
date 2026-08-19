@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, CalendarClock, Clock, Target, Users, Loader2, Pencil, Trash2, Save, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useProgramDetail, useDeleteProgram } from "@/lib/queries";
 import { SessionBuilderModal } from "@/components/site/SessionBuilderModal";
 
@@ -183,13 +183,15 @@ function DeleteProgramDialog({ program, open, onClose }: { program: any; open: b
   const navigate = Route.useNavigate();
   const remove = useDeleteProgram();
 
-  const confirm = () => {
+  const confirm = async () => {
+    const ok = await confirmAction({ title: "Hapus program ini?", text: "Program dan sesi latihan terkait dihapus permanen.", confirmText: "Ya, Hapus", danger: true });
+    if (!ok) return;
     remove.mutate(program.id, {
       onSuccess: () => {
-        toast.success(`Program "${program.title}" dihapus`);
+        notifySuccess({ title: "Terhapus", text: `Program "${program.title}" dihapus` });
         navigate({ to: "/programs" });
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menghapus"),
+      onError: (e: any) => notifyError({ title: "Gagal menghapus", text: e?.message ?? "Gagal menghapus" }),
     });
   };
 

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ShieldCheck, Save, Loader2, Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useAdminRoles, useUpdateRolePermissions, useCreateRole, useDeleteRole, type RoleInfo } from "@/lib/queries";
 
 export const Route = createFileRoute("/role-management")({
@@ -62,30 +63,33 @@ function RoleManagementPage() {
       || editDesc !== (current.description ?? "")
     : false;
 
-  const save = () => {
+  const save = async () => {
     if (!editLabel.trim()) { toast.error("Label wajib diisi"); return; }
+    const confirmed = await confirmAction({ title: "Simpan perubahan?", text: "Simpan perubahan role & permission?", confirmText: "Ya, Simpan", danger: false });
+    if (!confirmed) return;
     update.mutate({
       role: selectedRole,
       label: editLabel.trim(),
       description: editDesc || null,
       permissions: [...draft],
     }, {
-      onSuccess: () => toast.success(`Role '${editLabel}' disimpan`),
-      onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan"),
+      onSuccess: () => notifySuccess({ title: "Tersimpan", text: `Role '${editLabel}' disimpan` }),
+      onError: (e: any) => notifyError({ title: "Gagal menyimpan", text: e?.message }),
     });
   };
 
-  const onDelete = (r: RoleInfo) => {
-    if (!confirm(`Hapus role '${r.label}'? Semua permission & menu role ini ikut terhapus.`)) return;
+  const onDelete = async (r: RoleInfo) => {
+    const confirmed = await confirmAction({ title: `Hapus role '${r.label}'?`, text: "Semua permission & menu role ini ikut terhapus.", confirmText: "Ya, Hapus", danger: true });
+    if (!confirmed) return;
     remove.mutate(r.role, {
       onSuccess: () => {
-        toast.success(`Role '${r.label}' dihapus`);
+        notifySuccess({ title: "Terhapus", text: `Role '${r.label}' dihapus` });
         if (selectedRole === r.role) {
           const next = roles.find((x) => x.role !== r.role);
           if (next) selectRole(next.role);
         }
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal hapus role"),
+      onError: (e: any) => notifyError({ title: "Gagal hapus role", text: e?.message }),
     });
   };
 
@@ -237,8 +241,10 @@ function CreateRoleDialog({
   const [selected, setSelected] = useState<Set<string>>(new Set(["dashboard.view"]));
   const create = useCreateRole();
 
-  const submit = () => {
+  const submit = async () => {
     if (!role.trim() || !label.trim()) { toast.error("Nama role & label wajib diisi"); return; }
+    const confirmed = await confirmAction({ title: "Buat role?", text: `Buat role '${label}' dengan permission terpilih?`, confirmText: "Ya, Buat", danger: false });
+    if (!confirmed) return;
     create.mutate({
       role: role.trim().toLowerCase().replace(/\s+/g, "_"),
       label: label.trim(),
@@ -247,12 +253,12 @@ function CreateRoleDialog({
       menus: [{ label: "Dashboard", icon: "Home", path: "/dashboard", sort_order: 1 }],
     }, {
       onSuccess: (res: any) => {
-        toast.success(`Role '${res?.data?.label ?? label}' dibuat`);
+        notifySuccess({ title: "Role dibuat", text: `Role '${res?.data?.label ?? label}' dibuat` });
         onOpenChange(false);
         onCreated(res?.data?.role ?? role);
         setRole(""); setLabel(""); setDescription(""); setSelected(new Set(["dashboard.view"]));
       },
-      onError: (e: any) => toast.error(e?.message ?? "Gagal membuat role"),
+      onError: (e: any) => notifyError({ title: "Gagal membuat role", text: e?.message }),
     });
   };
 

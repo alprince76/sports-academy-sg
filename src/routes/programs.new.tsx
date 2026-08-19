@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/site/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { ProgramForm, emptyForm } from "@/components/site/ProgramForm";
 import { useCreateProgram, getAcademyId } from "@/lib/queries";
 
@@ -16,14 +16,16 @@ function NewProgramPage() {
   const create = useCreateProgram();
 
   const submit = (payload: Record<string, unknown>) => {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
+      const ok = await confirmAction({ title: "Simpan perubahan?", text: "Program baru akan disimpan ke backend.", danger: false });
+      if (!ok) { resolve(); return; }
       create.mutate(payload as any, {
         onSuccess: () => {
-          toast.success("Program tersimpan ke backend", { description: String(payload.title) });
+          notifySuccess({ title: "Tersimpan", text: "Program tersimpan ke backend" });
           setTimeout(() => navigate({ to: "/programs" }), 600);
           resolve();
         },
-        onError: (e: any) => reject(e),
+        onError: (e: any) => { notifyError({ title: "Gagal menyimpan", text: e?.message ?? "Gagal menyimpan program" }); reject(e); },
       });
     });
   };
