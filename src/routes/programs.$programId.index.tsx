@@ -28,7 +28,11 @@ function ProgramDetailPage() {
   const { data: program, isLoading } = useProgramDetail(programId);
   const [delOpen, setDelOpen] = useState(false);
   const [sessOpen, setSessOpen] = useState(false);
+  const [editSession, setEditSession] = useState<any | null>(null);
   const remove = useDeleteProgram();
+
+  const openNew = () => { setEditSession(null); setSessOpen(true); };
+  const openEdit = (s: any) => { setEditSession(s); setSessOpen(true); };
 
   if (isLoading) {
     return (
@@ -103,7 +107,7 @@ function ProgramDetailPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">{sessions.length} sesi · {totalBlocks} blok drill</Badge>
-                  <Button size="sm" onClick={() => setSessOpen(true)}>
+                  <Button onClick={openNew}>
                     <Plus className="mr-1 h-4 w-4" /> Tambah Sesi
                   </Button>
                 </div>
@@ -127,6 +131,9 @@ function ProgramDetailPage() {
                       <Link to="/training/$sessionId" params={{ sessionId: s.id }}>
                         <Button size="sm" variant="secondary">Detail</Button>
                       </Link>
+                      <Button size="sm" variant="outline" onClick={() => openEdit(s)}>
+                        <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -154,9 +161,10 @@ function ProgramDetailPage() {
       <DeleteProgramDialog program={program} open={delOpen} onClose={() => setDelOpen(false)} />
       <SessionBuilderModal
         open={sessOpen}
-        onOpenChange={setSessOpen}
+        onOpenChange={(o) => { setSessOpen(o); if (!o) setEditSession(null); }}
         programId={program.id}
         programTitle={program.title}
+        editSession={editSession}
       />
     </DashboardLayout>
   );

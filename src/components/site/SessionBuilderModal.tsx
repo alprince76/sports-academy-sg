@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
 import { BLOCK_META } from "@/lib/training-data";
-import { useDrills, useCreateSession } from "@/lib/queries";
+import { useDrills, useCreateSession, useUpdateSession } from "@/lib/queries";
 
 /** Kategori blok: Warm Up → Cool Down */
 const BLOCK_ORDER = ["Warm Up", "Fundamental", "Skill Development", "Small Side Game", "Cool Down"] as const;
@@ -36,15 +36,20 @@ export function SessionBuilderModal({
   onOpenChange,
   programId,
   programTitle,
+  editSession = null,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   programId: string;
   programTitle: string;
+  /** Sesi yang sedang diedit (null = buat baru). */
+  editSession?: any | null;
 }) {
   const { data: drills = [] } = useDrills();
   const createSession = useCreateSession();
+  const updateSession = useUpdateSession();
   const qc = useQueryClient();
+  const isEdit = !!editSession;
 
   const [blocks, setBlocks] = useState<Record<BlockId, string[]>>(DEFAULT_BLOCKS());
   const [sessionTitle, setSessionTitle] = useState("");
@@ -52,9 +57,26 @@ export function SessionBuilderModal({
   const [endTime, setEndTime] = useState("17:30");
   const [saving, setSaving] = useState(false);
 
-  // reset saat dibuka
-  if (open && sessionTitle === "" && Object.values(blocks).every((b) => b.length === 0)) {
-    // keep as-is (fresh)
+  // sync state saat dibuka / pindah sesi
+  const [prevKey, setPrevKey] = useState<string | null>(null);
+  const openKey = open ? (editSession?.id ?? "new") : "";
+  if (open && openKey !== prevKey) {
+    setPrevKey(openKey);
+    if (editSession) {
+      setSessionTitle(editSession.title ?? "");
+      setStartTime(editSession.start_time?.slice(0, 5) ?? "16:00");
+      setEndTime(editSession.end_time?.slice(0, 5) ?? "17:30");
+      const next = DEFAULT_BLOCKS();
+      for (const b of (editSession.blocks ?? []) as any[]) {
+        if (b && b.category && b.drillIds) next[b.category as BlockId] = [...(b.drillIds ?? [])];
+      }
+      setBlocks(next);
+    } else {
+      setBlocks(DEFAULT_BLOCKS());
+      setSessionTitle("");
+      setStartTime("16:00");
+      setEndTime("17:30");
+    }
   }
 
   const drillById = (id: string) => drills.find((d) => d.id === id);
@@ -107,39 +129,43 @@ export function SessionBuilderModal({
   const removeDrill = (block: BlockId, id: string) => setBlocks((prev) => ({ ...prev, [block]: (prev[block] ?? []).filter((x) => x !== id) }));
 
   const saveSession = () => {
-    if (totalDrills === 0) { toast.error("Tambahkan minimal 1 drill dulu"); return; }
+    if (!isEdit && totalDrills === 0) { toast.error("Tambahkan minimal 1 drill dulu"); return; }
     setSaving(true);
     const validBlocks = BLOCK_ORDER.filter((b) => (blocks[b] ?? []).length > 0).map((b) => ({
       category: b,
       targetMinutes: Math.max(blockMinutes(b), 5),
       drillIds: blocks[b] ?? [],
     }));
-    createSession.mutate({
-      program_id: programId,
+    const payload = {
       title: sessionTitle.trim() || `Sesi ${programTitle ?? ""}`.trim(),
       session_date: new Date().toISOString().slice(0, 10),
       start_time: startTime || null,
       end_time: endTime || null,
       focus: totalDrills ? (drillById((blocks[BLOCK_ORDER[1]] ?? [])[0] ?? "")?.category ?? null) : null,
       blocks: validBlocks,
-    } as any, {
-      onSuccess: () => {
-        toast.success("Sesi tersimpan");
-        setSaving(false);
-        resetForm();
-        qc.invalidateQueries({ queryKey: ["program", programId] });
-        qc.invalidateQueries({ queryKey: ["sessions"] });
-        onOpenChange(false);
-      },
-      onError: (e: any) => { toast.error(e?.message ?? "Gagal simpan"); setSaving(false); },
-    });
+    } as any;
+    const onSuccess = () => {
+      toast.success(isEdit ? "Sesi diperbarui" : "Sesi tersimpan");
+      setSaving(false);
+      resetForm();
+      qc.invalidateQueries({ queryKey: ["program", programId] });
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      onOpenChange(false);
+    };
+    const onError = (e: any) => { toast.error(e?.message ?? "Gagal simpan"); setSaving(false); };
+
+    if (isEdit && editSession?.id) {
+      updateSession.mutate({ id: editSession.id, ...payload } as any, { onSuccess, onError });
+    } else {
+      createSession.mutate({ program_id: programId, ...payload } as any, { onSuccess, onError });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !saving) onOpenChange(false); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-2 border-b">
-          <DialogTitle className="font-display text-xl">Tambah Sesi Baru</DialogTitle>
+          <DialogTitle className="font-display text-xl">{isEdit ? "Edit Sesi Latihan" : "Tambah Sesi Baru"}</DialogTitle>
           <DialogDescription>
             Program: <span className="font-semibold text-primary">{programTitle}</span> — susun drill dari Warm Up sampai Cool Down.
           </DialogDescription>
@@ -241,9 +267,9 @@ export function SessionBuilderModal({
         <DialogFooter className="px-6 py-4 border-t gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Batal</Button>
           <Button variant="outline" onClick={resetForm} disabled={saving}><X className="mr-1 h-4 w-4" />Reset</Button>
-          <Button onClick={saveSession} disabled={saving || totalDrills === 0}>
+          <Button onClick={saveSession} disabled={saving || (!isEdit && totalDrills === 0)}>
             {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
-            Simpan Sesi
+            {isEdit ? "Simpan Perubahan" : "Simpan Sesi"}
           </Button>
         </DialogFooter>
       </DialogContent>
