@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -71,7 +71,29 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+function isAuthenticated(): boolean {
+  try {
+    if (typeof window === "undefined") return false; // SSR tidak punya localStorage
+    return !!localStorage.getItem("sportacademy.session");
+  } catch {
+    return false;
+  }
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: async ({ location }) => {
+    // Lapisan kedua: blok akses URL langsung bila belum login (backend tetap benteng utama)
+    // Pada SSR (server-render) kita tidak tahu sesi → biarkan, client saat hydration yang akan redirect.
+    if (typeof window === "undefined") return;
+    const isLogin = location.pathname === "/login";
+    const authed = isAuthenticated();
+    if (!isLogin && !authed) {
+      return { redirect: { to: "/login", search: { next: location.pathname } as any } };
+    }
+    if (isLogin && authed) {
+      return { redirect: { to: "/dashboard" } };
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -123,7 +145,28 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthGuard />
     </QueryClientProvider>
   );
+}
+
+/** Lapisan kedua: guard otentikasi client-side (SSR-safe). Redirect ke /login bila belum login. */
+function AuthGuard() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const authed = isAuthenticated();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isLogin = pathname === "/login";
+    if (!isLogin && !authed) {
+      navigate({ to: "/login", search: { next: pathname } as any });
+    } else if (isLogin && authed) {
+      navigate({ to: "/dashboard" as any });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, authed]);
+
+  // Biarkan login page dirender apa adanya; tanpa login langsung redirect via effect di atas.
+  return <Outlet />;
 }
