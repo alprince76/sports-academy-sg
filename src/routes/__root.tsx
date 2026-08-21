@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getRole } from "../lib/role";
+import { canAccess } from "../lib/role-guard";
 
 function NotFoundComponent() {
   return (
@@ -150,7 +152,8 @@ function RootComponent() {
   );
 }
 
-/** Lapisan kedua: guard otentikasi client-side (SSR-safe). Redirect ke /login bila belum login. */
+/** Lapisan kedua: guard otentikasi + role (SSR-safe). Redirect ke /login bila belum login,
+ *  redirect ke /dashboard bila role tidak berhak membuka halaman tsb. */
 function AuthGuard() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -161,12 +164,19 @@ function AuthGuard() {
     const isLogin = pathname === "/login";
     if (!isLogin && !authed) {
       navigate({ to: "/login", search: { next: pathname } as any });
-    } else if (isLogin && authed) {
+      return;
+    }
+    if (isLogin && authed) {
+      navigate({ to: "/dashboard" as any });
+      return;
+    }
+    // role guard: cek apakah role user boleh membuka halaman ini
+    const role = getRole();
+    if (!isLogin && role && !canAccess(pathname, role)) {
       navigate({ to: "/dashboard" as any });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, authed]);
 
-  // Biarkan login page dirender apa adanya; tanpa login langsung redirect via effect di atas.
   return <Outlet />;
 }
