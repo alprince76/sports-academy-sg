@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Save, ClipboardList, AlertCircle, Printer, ScanLine, Trash2, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { ATHLETES, healthStatusColor } from "@/lib/demo-data";
@@ -177,6 +177,7 @@ function SessionPage() {
             roster={roster}
             sessionDate={sessionDate}
             coachId={getUserIdFromSession() ?? userId}
+            hasExisting={evalByAthlete.size > 0}
             prefillEvals={evalByAthlete}
             prefillNotes={Object.fromEntries(
               roster.map((a) => [a.id, evalByAthlete.get(a.id)?.note ?? ""])
@@ -291,16 +292,19 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, prefillNotes, prefillScores }: {
+function SessionEvaluationPanel({ roster, sessionDate, coachId, hasExisting, prefillEvals, prefillNotes, prefillScores }: {
   roster: { id: string; name: string; position?: string | null; team?: string | null; age_group?: string | null; health?: any; skills?: any }[];
   sessionDate: string;
   coachId: string;
+  hasExisting?: boolean;
   prefillEvals?: Map<string, Evaluation>;
   prefillNotes?: Record<string, string>;
   prefillScores?: Record<string, Record<string, number>>;
 }) {
   const createEvaluation = useCreateEvaluation();
   const createAssessment = useCreateAssessment();
+  const [knownHasData, setKnownHasData] = useState(!!hasExisting);
+  useEffect(() => { if (hasExisting) setKnownHasData(true); }, [hasExisting]);
   const [evals, setEvals] = useState<Record<string, SessionSkillEvaluation>>(
     Object.fromEntries(roster.map((a) => [a.id, { ...DEFAULT_SESSION_EVAL }]))
   );
@@ -376,7 +380,14 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, pr
   };
 
   const saveAll = async () => {
-    const confirmed = await confirmAction({ title: "Simpan semua?", text: "Simpan evaluasi & assessment Draft untuk semua atlet?", confirmText: "Ya, Simpan", danger: false });
+    const confirmed = await confirmAction({
+      title: knownHasData ? "Update semua?" : "Simpan semua?",
+      text: knownHasData
+        ? "Data sudah ada di DB — perbarui evaluasi & assessment Draft untuk semua atlet?"
+        : "Simpan evaluasi & assessment Draft untuk semua atlet?",
+      confirmText: knownHasData ? "Ya, Update" : "Ya, Simpan",
+      danger: false,
+    });
     if (!confirmed) return;
     setSavingAll(true);
     const active = roster.filter((a) => (a.health?.status ?? "Healthy") !== "Not Available");
@@ -390,8 +401,9 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, pr
       })
     );
     setSavingAll(false);
+    setKnownHasData(true);
     const okCount = res.filter(Boolean).length;
-    notifySuccess({ title: "Tersimpan", text: `${okCount}/${res.length} atlet · assessment Draft dibuat` });
+    notifySuccess({ title: knownHasData ? "Diperbarui" : "Tersimpan", text: `${okCount}/${res.length} atlet` });
   };
 
   return (
@@ -409,7 +421,9 @@ function SessionEvaluationPanel({ roster, sessionDate, coachId, prefillEvals, pr
               </div>
             </div>
             <Button onClick={saveAll} disabled={savingAll}>
-              {savingAll ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Menyimpan</> : <><Save className="mr-1 h-4 w-4" />Save All</>}
+              {savingAll ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Menyimpan</> :
+                knownHasData ? <><RefreshCw className="mr-1 h-4 w-4" />Update All</> :
+                <><Save className="mr-1 h-4 w-4" />Save All</>}
             </Button>
           </div>
 
