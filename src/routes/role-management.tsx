@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ShieldCheck, Save, Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { ShieldCheck, Save, Loader2, Plus, Trash2, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { confirmAction, notifySuccess, notifyError } from "@/lib/confirm";
 import { useAdminRoles, useUpdateRolePermissions, useCreateRole, useDeleteRole, type RoleInfo } from "@/lib/queries";
@@ -147,24 +147,39 @@ function RoleManagementPage() {
                   <p className="truncate text-sm font-semibold">{r.label}</p>
                   <p className="truncate font-mono text-[11px] text-muted-foreground">{r.role}</p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1.5">
                   <Badge variant="secondary">{r.permissions.length} perm</Badge>
-                  {r.is_system ? (
-                    <Badge variant="outline" className="text-[10px]">sistem</Badge>
-                  ) : (
+                  {r.is_system && <Badge variant="outline" className="text-[10px]">sistem</Badge>}
+                  {/* 4 aksi CRUD eksplisit: read/update selalu aktif, delete disabled untuk role sistem */}
+                  <div className="flex items-center gap-2.5">
                     <button
-                      onClick={(e) => { e.stopPropagation(); onDelete(r); }}
-                      disabled={remove.isPending}
-                      className="text-[10px] text-muted-foreground hover:text-destructive"
-                      title="Hapus role"
+                      onClick={(e) => { e.stopPropagation(); selectRole(r.role); }}
+                      className="text-muted-foreground hover:text-primary"
+                      title="Lihat detail role"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); selectRole(r.role); }}
+                      className="text-muted-foreground hover:text-primary"
+                      title="Edit role"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (!r.is_system) onDelete(r); }}
+                      disabled={r.is_system || remove.isPending}
+                      className={r.is_system ? "cursor-not-allowed text-muted-foreground/30" : "text-muted-foreground hover:text-destructive"}
+                      title={r.is_system ? "Role sistem tidak bisa dihapus" : "Hapus role"}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
 
           {/* Editor role */}
           <Card className="border-border/70">
